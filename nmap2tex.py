@@ -12,46 +12,54 @@ from xml.dom import minidom
 nmapFile = ''
 latexFile = ''
 usersFile = ''
+templateFile = ''
 nmapScan = ''
 hosts = ''
 
 
-# Handle Inputs:
+# Input Handling:
 
 def invalidInput(num):
     print('Nmap2Tex '+str(__version__))
     if num == 0:
         print('Invalid Input: No inputs provided.')
-    if num == 1:
+    elif num == 1:
         print('Invalid Input: Only one input provided.')
-    if num == 2:
-        print('Invalid Input: Only two inputs must be provided.')
-    print('Usage: nmap2tex <Nmap XML file> <Output LaTeX file> [-u/--users <User\'s file>]')
+    elif num == 2:
+        print('Invalid Input: Only 6 inputs at most can be provided including files.')
+    elif num == 3:
+        print('Invalid input combination.')
+    print('Usage: nmap2tex <Nmap XML file> <Output LaTeX file> [-u/--users <User\'s file>] [-t/--template <Template file>]')
     print('The Nmap file provided must be an Nmap scan output file \nformatted in Nmap\'s XML format.')
     print('A users file can also be provided which provides a list of users \nseparated by either `,` `;`, a new line character or a tab character.')
+    print('A LaTeX template file can also be provided in an XML format. \nPlease see project documentation for more details.')
 
 
 def inputHandling():
-    if len(sys.argv) == 1 or len(sys.argv) == 2:
-        if len(sys.argv) == 1:
-            return invalidInput(0)
-    if len(sys.argv) == 2:
+    if len(sys.argv) == 1:
+        return invalidInput(0)
+    elif len(sys.argv) == 2:
         if sys.argv[1] == '-h' or sys.argv[1] == '--help':
             return invalidInput(-1)
         else:
             return invalidInput(1)
-    if len(sys.argv) > 4:
+    elif len(sys.argv) > 7:
         return invalidInput(2)
     else:
-        if len(sys.argv) == 4:
-            global usersFile
-            usersFile = sys.argv[3]
-        global nmapFile, latexFile
-        nmapFile = sys.argv[1]
-        latexFile = sys.argv[2]
+        if len(sys.argv) == 5 or len(sys.argv) == 7:
+            global usersFile, templateFile
+            for i in range(5, 7, 2):
+                if sys.argv[i] == '-u' or sys.argv[i] == '--users':
+                    usersFile = sys.argv[i+1]
+                elif sys.argv[i] == '-t' or sys.argv[i] == '--template':
+                    templateFile = sys.argv[i+1]
+                else:
+                    return invalidInput(3)
+        else:
+            return invalidInput(3)
 
 
-# Retrieving and parsing the Nmap XML file:
+# XML File Handling:
 
 def xmlHandling():
     global nmapScan, hosts

@@ -46,49 +46,63 @@ def inputHandling():
     elif len(sys.argv) > 7:
         return invalidInput(2)
     else:
+        global nmapFile, latexFile
+        nmapFile = sys.argv[1]
+        latexFile = sys.argv[2]
         if len(sys.argv) == 5 or len(sys.argv) == 7:
             global usersFile, templateFile
             for i in range(5, 7, 2):
                 if sys.argv[i] == '-u' or sys.argv[i] == '--users':
-                    usersFile = sys.argv[i+1]
+                    usersFile = sys.argv[i-1]
                 elif sys.argv[i] == '-t' or sys.argv[i] == '--template':
-                    templateFile = sys.argv[i+1]
+                    templateFile = sys.argv[i-1]
                 else:
                     return invalidInput(3)
-        else:
+        elif not len(sys.argv) == 3:
             return invalidInput(3)
 
 
 # XML File Handling:
 
+
 def xmlHandling():
     global nmapScan, hosts
     nmapScan = minidom.parse(nmapFile)
     hosts = nmapScan.getElementsByTagName("host")
+    for h in hosts:
+        parseHost(h)
 
 
 def parseHost(host):
     hostInfo = []
     ports = []
     services = []
-    hostInfo.append(host.getElementsByTagName("address").getAttribute("addr"))
-    opSys = host.getElementsByTagName("os").getElementsByTagName("osmatch")
-    if opSys is None:
+    hostInfo.append(host.getElementsByTagName("address")[0].getAttribute("addr"))
+    opSys = host.getElementsByTagName("os")[0].getElementsByTagName("osmatch")
+    if len(opSys) == 0:
         hostInfo.append('Unknown')
     else:
-        hostInfo.append(opSys)
+        hostInfo.append(opSys[0].getAttribute("name"))
     # Parse ports:
-    portInfo = host.getElementsByTagName("posts")
+    portInfo = host.getElementsByTagName("ports")[0].getElementsByTagName("port")
     for port in portInfo:
-        ports.append(port.getAttribute("portid")+'/'+port.getAttribute("tcp"))
-        serv = port.getElementsByTagName("service")
-        if serv.getAttribute("product") is None:
-            services.append(serv.getAttribute("name"))
+        ports.append(port.getAttribute("portid")+'/'+port.getAttribute("protocol"))
+        if port.getElementsByTagName("service") == []:
+            services.append('Unknown')
         else:
-            services.append(serv.getAttribute("product"))
-        name = port.getElementsByTagName("script").getElementsByTagName("elem")[1]
-        if name is not None:
-            hostInfo.append(name)
+            serv = port.getElementsByTagName("service")[0]
+            if serv.getAttribute("product") == '':
+                services.append(serv.getAttribute("name"))
+            else:
+                services.append(serv.getAttribute("product"))
+        # Check for PC name if available:
+        if not port.getElementsByTagName("script") == []:
+            script = port.getElementsByTagName("script")[0]
+            if not script.getElementsByTagName("elem") == []:
+                elem = script.getElementsByTagName("elem")
+                if len(elem) > 2:
+                    if elem[2].getAttribute("key") == 'NetBIOS_Computer_Name':
+                        hostInfo.append(elem[2].firstChild.data)
     # Return all 3 arrays to LaTeX file.
 
 

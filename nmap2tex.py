@@ -10,6 +10,7 @@ import sys
 
 xmlFile = ''
 latexFile = ''
+usersFile = ''
 
 
 # Handle Inputs:
@@ -22,7 +23,7 @@ def invalidInput(num):
         print('Invalid Input: Only one input provided.')
     if num == 2:
         print('Invalid Input: Only two inputs must be provided.')
-    print('Usage: nmap2tex [Nmap XML file] [Output LaTeX file]')
+    print('Usage: nmap2tex <Nmap XML file> <Output LaTeX file> [-u/--users <User\'s file>]')
     print('The Nmap file provided must be an Nmap scan output file formatted in Nmap\'s XML format.')
 
 
@@ -35,9 +36,12 @@ def inputHandling():
             return invalidInput(-1)
         else:
             return invalidInput(1)
-    if len(sys.argv) > 3:
+    if len(sys.argv) > 4:
         return invalidInput(2)
     else:
+        if len(sys.argv) == 4:
+            global usersFile
+            usersFile = sys.argv[3]
         global xmlFile
         xmlFile = sys.argv[1]
         global latexFile

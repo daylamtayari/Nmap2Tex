@@ -82,3 +82,25 @@ def parseHost(host):
         if name is not None:
             hostInfo.append(name)
     # Return all 3 arrays to LaTeX file.
+
+
+# File Handling:
+
+def createFile():
+    file = open(latexFile, "w")
+    # Allows us to also wipe the file if it already contains something.
+    file.write("")
+    file.close()
+
+
+def appendFile(content):
+    file = open(latexFile, "a")
+    file.write(content)
+    file.close()
+
+
+def readFile(file):
+    f = open(file, "r")
+    content = f.read()
+    f.close()
+    return content

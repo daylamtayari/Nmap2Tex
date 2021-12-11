@@ -14,6 +14,7 @@ usersFile = ''
 templateFile = ''
 nmapScan = ''
 hosts = ''
+users = []
 
 
 # Input Handling:
@@ -106,6 +107,33 @@ def parseHost(host):
     addHost(hostInfo, ports, services)
 
 
+# Users File Handling:
+
+def getUsers():
+    with open(usersFile) as file:
+        for line in file:
+            users.append(line.rstrip())
+    file.close()
+
+
+def handleUsers():
+    if len(users) % 6 == 0:
+        for i in range(0, len(users), 6):
+            addUsers(users[i], users[i+1], users[i+2], users[i+3], users[i+4], users[i+5])
+    else:
+        diff = len(users) % 6
+        for i in range(0, len(users) + diff, 6):
+            if i + 5 > (len(users) - 1):
+                lim = len(users) - i - 1
+                lastUsers = []
+                for j in range(1, (lim + 1)):
+                    if (i + j) > (len(users) - 1):
+                        lastUsers.append("")
+                    else:
+                        lastUsers.append(users[i+j])
+                addUsers(lastUsers[0], lastUsers[1], lastUsers[2], lastUsers[3], lastUsers[4], lastUsers[5])
+
+
 # File Handling:
 
 def createFile():
@@ -185,7 +213,7 @@ def main():
     # Handle users:
     if not usersFile == '':
         startUsers()
-        parseUsers()
+        handleUsers()
         endUsers()
     endFile()
 

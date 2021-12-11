@@ -1,12 +1,13 @@
 \documentclass[12]{article}
 \usepackage[cm]{fullpage}
 \usepackage{array}
+\usepackage{longtable}
 
 \setlength{\parindent}{0em}
 \renewcommand{\arraystretch}{1.5}
 
 \renewcommand{\title}[3]{
-    \begin{left}
+    \begin{flushleft}
         \Large
         \textbf{#1}
 
@@ -19,7 +20,7 @@
 
         \vspace{0.4cm}
         Subject: Inventory
-    \end{left}
+    \end{flushleft}
 }
 
 \newcommand{\introduction}[1]{
@@ -29,18 +30,26 @@
 }
 
 \newcommand{\hosttable}[1]{
-    \begin{tabular}{ | l | l | l | @{}l@{} | }
+    \begin{longtable}{ | l | l | l | @{}c@{} | }
         \hline
         \textbf{Host Name:} & \textbf{Public IP:} & \textbf{Operating System:} & \hspace{0.04cm} \textbf{Ports and Services:} \\
         \hline
+        \endfirsthead
+        \hline
+        \textbf{Host Name:} & \textbf{Public IP:} & \textbf{Operating System:} & \hspace{0.04cm} \textbf{Ports and Services:} \\
+        \hline
+        \endhead
+        \endfoot
+        \endlastfoot
+
         #1
-    \end{tabular}
+    \end{longtable}
 }
 
 \newcommand{\host}[4]{
     #1 & #2 & #3 &
-    \begin{tabular}{ c | c }
-        Port: & Service: \\
+    \begin{tabular}{ l | l }
+        Port:\hspace{1cm} & Service:\hspace{4cm} \\
 
         #4
     \end{tabular} \\
@@ -56,7 +65,7 @@
 \newcommand{\usertble}[1]{
     \begin{tabular}{ | @{}c@{} | }
         \hline
-        \textbf{Users:} \\
+        \textbf{Users\:} \\
         \hline
         \begin{tabular}{ | c | c | c | c | c | c | }
             #1
@@ -66,6 +75,7 @@
 
 \newcommand{\user}[6]{
     #1 & #2 & #3 & #4 & #5 & #6 \\
+
     \hline
 }
 
@@ -75,7 +85,6 @@
 
 \vspace{0.9cm}
 
-\introduction{Mr. Change Me}
+\introduction{Mr Change Me}
 
 \vspace{0.9cm}
-

@@ -84,6 +84,10 @@ def parseHost(host):
         hostInfo.append('Unknown')
     else:
         hostInfo.append(opSys[0].getAttribute("name"))
+        if "Microsoft" in hostInfo[1]:
+            operSys = hostInfo[1][10:]
+            hostInfo.pop(1)
+            hostInfo.append(operSys)
     # Parse ports:
     portInfo = host.getElementsByTagName("ports")[0].getElementsByTagName("port")
     for port in portInfo:
@@ -96,6 +100,10 @@ def parseHost(host):
                 services.append(serv.getAttribute("name"))
             else:
                 services.append(serv.getAttribute("product"))
+            if "Microsoft" in services[len(services)-1]:
+                service = services[len(services)-1][10:]
+                services.pop(len(services)-1)
+                services.append(service)
         # Check for PC name if available:
         if not port.getElementsByTagName("script") == []:
             script = port.getElementsByTagName("script")[0]
@@ -165,37 +173,40 @@ def createTex():
 
 
 def startHosts():
-    appendFile(r"\hosttable{")
+    appendFile('\n' + r"\hosttable{")
 
 
 def addHost(hostInfo, ports, services):
     if len(hostInfo) > 2:
-        appendFile(r"\host{%s}{%s}{%s}{" % (hostInfo[2], hostInfo[0], hostInfo[1]))
+        appendFile('\n\t' + r"\host{%s}{%s}{%s}{" % (hostInfo[2], hostInfo[0], hostInfo[1]))
     else:
-        appendFile(r"\host{Unknown}{%s}{%s}{" % (hostInfo[0], hostInfo[1]))
-    for i in range(len(ports)):
-        appendFile(r"\portserve{%s}{%s}" % (ports[i].upper(), services[i]))
-    appendFile("}")
+        appendFile('\n\t' + r"\host{Unknown}{%s}{%s}{" % (hostInfo[0], hostInfo[1]))
+    if len(ports) == 0:
+        appendFile('\n\t\t' + r"\portserv{None}{None}")
+    else:
+        for i in range(len(ports)):
+            appendFile('\n\t\t' + r"\portserv{%s}{%s}" % (ports[i].upper(), services[i]))
+    appendFile("\n\t}")
 
 
 def endHosts():
-    appendFile("}")
+    appendFile("\n}")
 
 
 def startUsers():
-    appendFile(r"\nvspace{0.9cm}\n\usertble{")
+    appendFile('\n' + r"\nvspace{0.9cm}\n\usertble{")
 
 
 def addUsers(user1, user2, user3, user4, user5, user6):
-    appendFile(r"\user{%s}{%s}{%s}{%s}{%s}{%s}" % (user1, user2, user3, user4, user5, user6))
+    appendFile('\n\t' + r"\user{%s}{%s}{%s}{%s}{%s}{%s}" % (user1, user2, user3, user4, user5, user6))
 
 
 def endUsers():
-    appendFile("}")
+    appendFile("\n}")
 
 
 def endFile():
-    appendFile(r"\end{document}")
+    appendFile('\n' + r"\end{document}")
 
 
 # Core Program Handling:
@@ -218,5 +229,4 @@ def main():
     endFile()
 
 
-if __name__ == "__main":
-    main()
+main()

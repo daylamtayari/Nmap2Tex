@@ -55,9 +55,9 @@ def inputHandling():
         if len(sys.argv) == 5 or len(sys.argv) == 7:
             global usersFile, templateFile
             for i in range(5, 7, 2):
-                if sys.argv[i] == '-u' or sys.argv[i] == '--users':
+                if sys.argv[i-2] == '-u' or sys.argv[i-2] == '--users':
                     usersFile = sys.argv[i - 1]
-                elif sys.argv[i] == '-t' or sys.argv[i] == '--template':
+                elif sys.argv[i-2] == '-t' or sys.argv[i-2] == '--template':
                     templateFile = sys.argv[i - 1]
                 else:
                     return invalidInput(3)
@@ -134,12 +134,14 @@ def handleUsers():
             if i + 5 > (len(users) - 1):
                 lim = len(users) - i - 1
                 lastUsers = []
-                for j in range(1, (lim + 1)):
-                    if (i + j) > (len(users) - 1):
+                for j in range(1, 7):
+                    if j > lim:
                         lastUsers.append("")
                     else:
                         lastUsers.append(users[i+j])
                 addUsers(lastUsers[0], lastUsers[1], lastUsers[2], lastUsers[3], lastUsers[4], lastUsers[5])
+            else:
+                addUsers(users[i], users[i + 1], users[i + 2], users[i + 3], users[i + 4], users[i + 5])
 
 
 # File Handling:
@@ -194,7 +196,7 @@ def endHosts():
 
 
 def startUsers():
-    appendFile('\n' + r"\nvspace{0.9cm}\n\usertble{")
+    appendFile('\n' + r"\vspace{0.9cm}" + '\n' + r"\usertble{")
 
 
 def addUsers(user1, user2, user3, user4, user5, user6):
@@ -223,6 +225,7 @@ def main():
     endHosts()
     # Handle users:
     if not usersFile == '':
+        getUsers()
         startUsers()
         handleUsers()
         endUsers()

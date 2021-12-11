@@ -6,7 +6,6 @@ __author__ = 'Daylam Tayari'
 import sys
 from xml.dom import minidom
 
-
 # Global Variables:
 
 nmapFile = ''
@@ -20,7 +19,7 @@ hosts = ''
 # Input Handling:
 
 def invalidInput(num):
-    print('Nmap2Tex '+str(__version__))
+    print('Nmap2Tex ' + str(__version__))
     if num == 0:
         print('Invalid Input: No inputs provided.')
     elif num == 1:
@@ -29,10 +28,13 @@ def invalidInput(num):
         print('Invalid Input: Only 6 inputs at most can be provided including files.')
     elif num == 3:
         print('Invalid input combination.')
-    print('Usage: nmap2tex <Nmap XML file> <Output LaTeX file> [-u/--users <User\'s file>] [-t/--template <Template file>]')
+    print(
+        'Usage: nmap2tex <Nmap XML file> <Output LaTeX file> [-u/--users <User\'s file>] [-t/--template <Template file>]')
     print('The Nmap file provided must be an Nmap scan output file \nformatted in Nmap\'s XML format.')
-    print('A users file can also be provided which provides a list of users \nseparated by either `,` `;`, a new line character or a tab character.')
-    print('A LaTeX template file can also be provided in an XML format. \nPlease see project documentation for more details.')
+    print(
+        'A users file can also be provided which provides a list of users \nseparated by either `,` `;`, a new line character or a tab character.')
+    print(
+        'A LaTeX template file can also be provided in an XML format. \nPlease see project documentation for more details.')
 
 
 def inputHandling():
@@ -53,9 +55,9 @@ def inputHandling():
             global usersFile, templateFile
             for i in range(5, 7, 2):
                 if sys.argv[i] == '-u' or sys.argv[i] == '--users':
-                    usersFile = sys.argv[i-1]
+                    usersFile = sys.argv[i - 1]
                 elif sys.argv[i] == '-t' or sys.argv[i] == '--template':
-                    templateFile = sys.argv[i-1]
+                    templateFile = sys.argv[i - 1]
                 else:
                     return invalidInput(3)
         elif not len(sys.argv) == 3:
@@ -69,8 +71,6 @@ def xmlHandling():
     global nmapScan, hosts
     nmapScan = minidom.parse(nmapFile)
     hosts = nmapScan.getElementsByTagName("host")
-    for h in hosts:
-        parseHost(h)
 
 
 def parseHost(host):
@@ -86,7 +86,7 @@ def parseHost(host):
     # Parse ports:
     portInfo = host.getElementsByTagName("ports")[0].getElementsByTagName("port")
     for port in portInfo:
-        ports.append(port.getAttribute("portid")+'/'+port.getAttribute("protocol"))
+        ports.append(port.getAttribute("portid") + '/' + port.getAttribute("protocol"))
         if port.getElementsByTagName("service") == []:
             services.append('Unknown')
         else:
@@ -130,29 +130,65 @@ def readFile(file):
 
 # LaTeX Handling:
 
+def createTex():
+    content = readFile("template.tex")
+    createFile()
+    appendFile(content)
+
+
 def startHosts():
     appendFile(r"\hosttable{")
 
+
 def addHost(hostInfo, ports, services):
-        if len(hostInfo) > 2:
-            appendFile(r"\host{%s}{%s}{%s}{" % (hostInfo[2], hostInfo[0], hostInfo[1]))
-        else:
-            appendFile(r"\host{Unknown}{%s}{%s}{" % (hostInfo[0], hostInfo[1]))
-        for i in range(len(ports)):
-            appendFile(r"\portserve{%s}{%s}" % (ports[i].upper(), services[i]))
-        appendFile("}")
+    if len(hostInfo) > 2:
+        appendFile(r"\host{%s}{%s}{%s}{" % (hostInfo[2], hostInfo[0], hostInfo[1]))
+    else:
+        appendFile(r"\host{Unknown}{%s}{%s}{" % (hostInfo[0], hostInfo[1]))
+    for i in range(len(ports)):
+        appendFile(r"\portserve{%s}{%s}" % (ports[i].upper(), services[i]))
+    appendFile("}")
+
 
 def endHosts():
     appendFile("}")
 
+
 def startUsers():
     appendFile(r"\nvspace{0.9cm}\n\usertble{")
+
 
 def addUsers(user1, user2, user3, user4, user5, user6):
     appendFile(r"\user{%s}{%s}{%s}{%s}{%s}{%s}" % (user1, user2, user3, user4, user5, user6))
 
+
 def endUsers():
     appendFile("}")
 
+
 def endFile():
     appendFile(r"\end{document}")
+
+
+# Core Program Handling:
+
+def main():
+    inputHandling()
+    xmlHandling()
+    # Create and initiate LaTeX file:
+    createTex()
+    # Handle hosts:
+    startHosts()
+    for h in hosts:
+        parseHost(h)
+    endHosts()
+    # Handle users:
+    if not usersFile == '':
+        startUsers()
+        parseUsers()
+        endUsers()
+    endFile()
+
+
+if __name__ == "__main":
+    main()

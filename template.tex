@@ -1,0 +1,37 @@
+\documentclass[12]{article}
+\usepackage[cm]{fullpage}
+
+\setlength{\parindent}{0em}
+
+\renewcommand{\title}[3]{
+    \begin{left}
+        \Large
+        \textbf{#1}
+
+        \vspace{0.4cm}
+        \large
+        From: #2
+
+        \vspace{0.4cm}
+        To: #3
+
+        \vspace{0.4cm}
+        Subject: Inventory
+    \end{left}
+}
+
+\newcommand{\introduction}[1]{
+    Hello #1, \\
+
+    Attached below is our complete network inventory as requested with the full report of all of our systems, the services running and ports open on all of them and which users have access to them.
+}
+
+\begin{document}
+
+\title{Test title}{Team 1}{John Doe}
+
+\vspace{0.9cm}
+
+\introduction{John Doe}
+
+\end{document}

@@ -103,7 +103,7 @@ def parseHost(host):
                 if len(elem) > 2:
                     if elem[2].getAttribute("key") == 'NetBIOS_Computer_Name':
                         hostInfo.append(elem[2].firstChild.data)
-    # Return all 3 arrays to LaTeX file.
+    addHost(hostInfo, ports, services)
 
 
 # File Handling:
@@ -126,3 +126,33 @@ def readFile(file):
     content = f.read()
     f.close()
     return content
+
+
+# LaTeX Handling:
+
+def startHosts():
+    appendFile(r"\hosttable{")
+
+def addHost(hostInfo, ports, services):
+        if len(hostInfo) > 2:
+            appendFile(r"\host{%s}{%s}{%s}{" % (hostInfo[2], hostInfo[0], hostInfo[1]))
+        else:
+            appendFile(r"\host{Unknown}{%s}{%s}{" % (hostInfo[0], hostInfo[1]))
+        for i in range(len(ports)):
+            appendFile(r"\portserve{%s}{%s}" % (ports[i].upper(), services[i]))
+        appendFile("}")
+
+def endHosts():
+    appendFile("}")
+
+def startUsers():
+    appendFile(r"\nvspace{0.9cm}\n\usertble{")
+
+def addUsers(user1, user2, user3, user4, user5, user6):
+    appendFile(r"\user{%s}{%s}{%s}{%s}{%s}{%s}" % (user1, user2, user3, user4, user5, user6))
+
+def endUsers():
+    appendFile("}")
+
+def endFile():
+    appendFile(r"\end{document}")

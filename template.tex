@@ -1,7 +1,9 @@
 \documentclass[12]{article}
 \usepackage[cm]{fullpage}
+\usepackage{array}
 
 \setlength{\parindent}{0em}
+\renewcommand{\arraystretch}{1.5}
 
 \renewcommand{\title}[3]{
     \begin{left}
@@ -26,12 +28,55 @@
     Attached below is our complete network inventory as requested with the full report of all of our systems, the services running and ports open on all of them and which users have access to them.
 }
 
+\newcommand{\hosttable}[1]{
+    \begin{tabular}{ | l | l | l | @{}l@{} | }
+        \hline
+        \textbf{Host Name:} & \textbf{Public IP:} & \textbf{Operating System:} & \hspace{0.04cm} \textbf{Ports and Services:} \\
+        \hline
+        #1
+    \end{tabular}
+}
+
+\newcommand{\host}[4]{
+    #1 & #2 & #3 &
+    \begin{tabular}{ c | c }
+        Port: & Service: \\
+
+        #4
+    \end{tabular} \\
+    \hline
+}
+
+\newcommand{\portserv}[2]{
+    \hline
+
+    #1 & #2 \\
+}
+
+\newcommand{\usertble}[1]{
+    \begin{tabular}{ | @{}c@{} | }
+        \hline
+        \textbf{Users:} \\
+        \hline
+        \begin{tabular}{ | c | c | c | c | c | c | }
+            #1
+        \end{tabular} \\
+    \end{tabular}
+}
+
+\newcommand{\user}[6]{
+    #1 & #2 & #3 & #4 & #5 & #6 \\
+    \hline
+}
+
 \begin{document}
 
-\title{Test title}{Team 1}{John Doe}
+\title{Change Me}{Team Change Me}{Mr. Change Me}
 
 \vspace{0.9cm}
 
-\introduction{John Doe}
+\introduction{Mr. Change Me}
+
+\vspace{0.9cm}
 
 \end{document}

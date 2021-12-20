@@ -6,27 +6,17 @@
 \setlength{\parindent}{0em}
 \renewcommand{\arraystretch}{1.5}
 
-\renewcommand{\title}[3]{
+\renewcommand{\title}[1]{
     \begin{flushleft}
         \Large
         \textbf{#1}
 
         \vspace{0.4cm}
-        \large
-        From: #2
-
-        \vspace{0.4cm}
-        To: #3
-
-        \vspace{0.4cm}
-        Subject: Inventory
     \end{flushleft}
 }
 
 \newcommand{\introduction}[1]{
-    Hello #1, \\
-
-    Attached below is our complete network inventory as requested with the full report of all of our systems, the services running and ports open on all of them and which users have access to them.
+    #1
 }
 
 \newcommand{\hosttable}[1]{
@@ -81,10 +71,10 @@
 
 \begin{document}
 
-\title{Change Me}{Team Change Me}{Mr. Change Me}
+\title{Change Me}
 
 \vspace{0.9cm}
 
-\introduction{Mr Change Me}
+\introduction{Change Me}
 
 \vspace{0.9cm}

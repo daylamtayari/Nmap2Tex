@@ -1,6 +1,6 @@
 #! /usr/bin/python3
 
-__version__ = 0.1
+__version__ = '0.1'
 __author__ = 'Daylam Tayari'
 
 import sys
@@ -20,7 +20,7 @@ users = []
 # Input Handling:
 
 def invalidInput(num):
-    print('Nmap2Tex ' + str(__version__))
+    print('Nmap2Tex ' + __version__)
     if num == 0:
         print('Invalid Input: No inputs provided.')
     elif num == 1:

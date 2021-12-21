@@ -3,7 +3,7 @@
 __version__ = '0.1'
 __author__ = 'Daylam Tayari'
 
-from os import rename
+from os import wait
 import sys
 import re
 from xml.dom import minidom
@@ -53,11 +53,22 @@ class Host:
     def getService(self, port_id):
         return self.ports[port_id].getService()
 
+    def getPortService(self, _port):
+        for p in self.ports:
+            if p.port == _port:
+                return p.getService()
+
     def getPortOutput(self, port_id):
         return self.ports[port_id].port + '/' + self.ports[port_id].protocol.upper()
 
     def portsOpen(self):
         if len(self.ports) > 0:
+            return True
+        else:
+            return False
+
+    def hasVulns(self):
+        if len(self.vulns) > 0:
             return True
         else:
             return False
@@ -79,9 +90,27 @@ class Host:
 
     def addVuln(self, cve, cvss, port):
         new_vuln = Vuln(cve, cvss, port)
-        self.vulns.append(new_vuln)
-        self._vuln_id += 1
-        return (self._vuln_id - 1)
+        if self._vuln_id == 0 or float(cvss) > float(self.vulns[self._vuln_id - 1].cvss):
+            self.vulns.append(new_vuln)
+            self._vuln_id += 1
+            return (self._vuln_id - 1)
+        else:
+            for i in range(len(self.vulns)):
+                if float(cvss) <= float(self.vulns[i].cvss):
+                    self.vulns.insert(i, new_vuln)
+                    self._vuln_id += 1
+                    return i
+
+    def vulnStatus(self):
+        if len(self.vulns) == 0:
+            return 'Green'
+        for v in self.vulns:
+            if float(v.cvss) >= 7.0:
+                return 'Red'
+            elif float(v.cvss) > 0.0:
+                return 'Yellow'
+            else:
+                return 'Green'
 
 
 class Port:
@@ -190,7 +219,10 @@ def renameServices(serv):
 
 def parseHost(host):
     ip = host.getElementsByTagName("address")[0].getAttribute("addr")
-    opSys = host.getElementsByTagName("os")[0].getElementsByTagName("osmatch")
+    if host.getElementsByTagName("os") == []:
+        opSys = {}
+    else:
+        opSys = host.getElementsByTagName("os")[0].getElementsByTagName("osmatch")
     if len(opSys) == 0:
         opSys = 'Unknown'
     else:
@@ -219,13 +251,31 @@ def parseHost(host):
                     vers = ''
                 hst.addServiceVersion(port_id, vers)
         # Check for PC name if available:
-        if not port.getElementsByTagName("script") == []:
+        if port.getElementsByTagName("script") != []:
             script = port.getElementsByTagName("script")[0]
-            if not script.getElementsByTagName("elem") == []:
+            if script.getElementsByTagName("elem") != []:
                 elem = script.getElementsByTagName("elem")
                 if len(elem) > 2:
                     if elem[2].getAttribute("key") == 'NetBIOS_Computer_Name':
                         hst.hostname = elem[2].firstChild.data
+        # Check for and add vulnerabilities:
+        if not port.getElementsByTagName("script") == []:
+            tables = port.getElementsByTagName("script")[0].getElementsByTagName("table")
+            if tables != []:
+                for t in range(1, len(tables)):
+                    elems = tables[t].getElementsByTagName("elem")
+                    cve = False
+                    cveid = ''
+                    cvss = ''
+                    for e in elems:
+                        if e.getAttribute("key") == "type" and e.firstChild.data == "cve":
+                            cve = True
+                        elif e.getAttribute("key") == "cvss":
+                            cvss = e.firstChild.data
+                        elif e.getAttribute("key") == "id":
+                            cveid = e.firstChild.data
+                    if cve:
+                        hst.addVuln(cveid, cvss, port.getAttribute("portid"))
     global hosts
     hosts.append(hst)
 
@@ -326,11 +376,33 @@ def endUsers():
     appendFile("\n}")
 
 
+def startVuln():
+    appendFile('\n' + r"\vspace{0.9cm}" + '\n')
+
+
+def addVulns(host):
+    appendFile('\n' + r"\systemvuln{%s}{%s}{%s}{" % (host.hostname, host.ip, host.vulnStatus()))
+    if not host.hasVulns():
+        appendFile('\n\t' + r"\vuln{None}{0.0}")
+    else:
+        for v in range(len(host.vulns)):
+            appendFile('\n\t' + r"\vuln{%s: %s}{%s}" % (host.getPortService(host.vulns[v].port), host.vulns[v].cve, host.vulns[v].cvss))
+    appendFile('\n}')
+
+
 def endFile():
     appendFile('\n' + r"\end{document}")
 
 
 # Core Program Handling:
+
+def vulnsPres():
+    for h in hosts:
+        if h.hasVulns():
+            return True
+    else:
+        return False
+
 
 def main():
     inputHandling()
@@ -344,6 +416,11 @@ def main():
     for h in hosts:
         addHost(h)
     endHosts()
+    # Handle vulnerabilities:
+    if vulnsPres():
+        startVuln()
+        for hv in hosts:
+            addVulns(hv)
     # Handle users:
     if not usersFile == '':
         getUsers()

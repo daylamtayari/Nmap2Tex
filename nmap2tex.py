@@ -231,7 +231,10 @@ def parseHost(host):
             opSys = opSys[10:]
     hst = Host(ip, opSys)
     # Parse ports:
-    portInfo = host.getElementsByTagName("ports")[0].getElementsByTagName("port")
+    if host.getElementsByTagName("ports") == []:
+        portInfo = []
+    else:
+        portInfo = host.getElementsByTagName("ports")[0].getElementsByTagName("port")
     for port in portInfo:
         port_id = hst.addPort(port.getAttribute("portid"), port.getAttribute("protocol"))
         if port.getElementsByTagName("service") == []:

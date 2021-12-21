@@ -13,8 +13,77 @@ latexFile = ''
 usersFile = ''
 templateFile = ''
 nmapScan = ''
-hosts = ''
+hostXML = ''
+hosts = []
 users = []
+
+
+# Object Classes:
+
+class Host:
+    def __init__(self, ip, os):
+        self.ip = ip
+        self.os = os
+        self.hostname = 'Unknown'
+        self.ports = []
+        self._port_id = 0
+        self.vulns = []
+        self._vuln_id = 0
+
+    def getService(self, port_id):
+        return self.ports[port_id].service
+
+    def getPortOutput(self, port_id):
+        return self.ports[port_id].port + '/' + self.ports[port_id].protocol.upper()
+
+    def portsOpen(self):
+        if len(self.ports) > 0:
+            return True
+        else:
+            return False
+
+    def addPort(self, port, protocol):
+        new_port = Port(port, protocol)
+        self.ports.append(new_port)
+        self._port_id += 1
+        return (self._port_id - 1)
+
+    def addService(self, port_id, service_name):
+        self.ports[port_id].service = service_name
+
+    def addVuln(self, cve, cvss, port):
+        new_vuln = Vuln(cve, cvss, port)
+        self.vulns.append(new_vuln)
+        self._vuln_id += 1
+        return (self._vuln_id - 1)
+
+
+class Port:
+    def __init__(self, port, protocol):
+        self.port = port
+        self.protocol = protocol
+        self.service = 'Unknown'
+
+
+class Service:
+    def __init__(self, name):
+        self.name = name
+        self.product = ''
+        self.version = ''
+
+
+class Vuln:
+    def __init__(self, cve, cvss, port):
+        self.cve = cve
+        self.cvss = cvss
+        self.port = port
+
+
+class User:
+    admin = False
+
+    def __init__(self, name):
+        self.name = name
 
 
 # Input Handling:
@@ -69,41 +138,35 @@ def inputHandling():
 
 
 def xmlHandling():
-    global nmapScan, hosts
+    global nmapScan, hostXML
     nmapScan = minidom.parse(nmapFile)
-    hosts = nmapScan.getElementsByTagName("host")
+    hostXML = nmapScan.getElementsByTagName("host")
 
 
 def parseHost(host):
-    hostInfo = []
-    ports = []
-    services = []
-    hostInfo.append(host.getElementsByTagName("address")[0].getAttribute("addr"))
+    ip = host.getElementsByTagName("address")[0].getAttribute("addr")
     opSys = host.getElementsByTagName("os")[0].getElementsByTagName("osmatch")
     if len(opSys) == 0:
-        hostInfo.append('Unknown')
+        opSys = 'Unknown'
     else:
-        hostInfo.append(opSys[0].getAttribute("name"))
-        if "Microsoft" in hostInfo[1]:
-            operSys = hostInfo[1][10:]
-            hostInfo.pop(1)
-            hostInfo.append(operSys)
+        opSys = opSys[0].getAttribute("name")
+        if "Microsoft" in opSys:
+            opSys = opSys[10:]
+    hst = Host(ip, opSys)
     # Parse ports:
     portInfo = host.getElementsByTagName("ports")[0].getElementsByTagName("port")
     for port in portInfo:
-        ports.append(port.getAttribute("portid") + '/' + port.getAttribute("protocol"))
+        port_id = hst.addPort(port.getAttribute("portid"), port.getAttribute("protocol"))
         if port.getElementsByTagName("service") == []:
-            services.append('Unknown')
+            hst.addService(port_id, 'Unknown')
         else:
             serv = port.getElementsByTagName("service")[0]
             if serv.getAttribute("product") == '':
-                services.append(serv.getAttribute("name"))
+                hst.addService(port_id, serv.getAttribute("name"))
             else:
-                services.append(serv.getAttribute("product"))
-            if "Microsoft" in services[len(services)-1]:
-                service = services[len(services)-1][10:]
-                services.pop(len(services)-1)
-                services.append(service)
+                hst.addService(port_id, serv.getAttribute("product"))
+            if "Microsoft" in hst.getService(port_id):
+                hst.ports[port_id].service = hst.getService(port_id)[10:]
         # Check for PC name if available:
         if not port.getElementsByTagName("script") == []:
             script = port.getElementsByTagName("script")[0]
@@ -111,8 +174,9 @@ def parseHost(host):
                 elem = script.getElementsByTagName("elem")
                 if len(elem) > 2:
                     if elem[2].getAttribute("key") == 'NetBIOS_Computer_Name':
-                        hostInfo.append(elem[2].firstChild.data)
-    addHost(hostInfo, ports, services)
+                        hst.hostname = elem[2].firstChild.data
+    global hosts
+    hosts.append(hst)
 
 
 # Users File Handling:
@@ -120,14 +184,21 @@ def parseHost(host):
 def getUsers():
     with open(usersFile) as file:
         for line in file:
-            users.append(line.rstrip())
+            users.append(User(line.rstrip()))
     file.close()
+
+
+def adminHandling(user):
+    if user.admin:
+        return "\\textbf{" + user.name + "}"
+    else:
+        return user.name
 
 
 def handleUsers():
     if len(users) % 6 == 0:
         for i in range(0, len(users), 6):
-            addUsers(users[i], users[i+1], users[i+2], users[i+3], users[i+4], users[i+5])
+            addUsers(adminHandling(users[i]), adminHandling(users[i+1]), adminHandling(users[i+2]), adminHandling(users[i+3]), adminHandling(users[i+4]), adminHandling(users[i+5]))
     else:
         diff = len(users) % 6
         for i in range(0, len(users) + diff, 6):
@@ -139,9 +210,9 @@ def handleUsers():
                         lastUsers.append("")
                     else:
                         lastUsers.append(users[i+j])
-                addUsers(lastUsers[0], lastUsers[1], lastUsers[2], lastUsers[3], lastUsers[4], lastUsers[5])
+                addUsers(adminHandling(lastUsers[0]), adminHandling(lastUsers[1]), adminHandling(lastUsers[2]), adminHandling(lastUsers[3]), adminHandling(lastUsers[4]), adminHandling(lastUsers[5]))
             else:
-                addUsers(users[i], users[i + 1], users[i + 2], users[i + 3], users[i + 4], users[i + 5])
+                addUsers(adminHandling(users[i]), adminHandling(users[i + 1]), adminHandling(users[i + 2]), adminHandling(users[i + 3]), adminHandling(users[i + 4]), adminHandling(users[i + 5]))
 
 
 # File Handling:
@@ -178,16 +249,13 @@ def startHosts():
     appendFile('\n' + r"\hosttable{")
 
 
-def addHost(hostInfo, ports, services):
-    if len(hostInfo) > 2:
-        appendFile('\n\t' + r"\host{%s}{%s}{%s}{" % (hostInfo[2], hostInfo[0], hostInfo[1]))
-    else:
-        appendFile('\n\t' + r"\host{Unknown}{%s}{%s}{" % (hostInfo[0], hostInfo[1]))
-    if len(ports) == 0:
+def addHost(host):
+    appendFile('\n\t' + r"\host{%s}{%s}{%s}{" % (host.hostname, host.ip, host.os))
+    if not host.portsOpen:
         appendFile('\n\t\t' + r"\portserv{None}{None}")
     else:
-        for i in range(len(ports)):
-            appendFile('\n\t\t' + r"\portserv{%s}{%s}" % (ports[i].upper(), services[i]))
+        for i in range(len(host.ports)):
+            appendFile('\n\t\t' + r"\portserv{%s}{%s}" % (host.getPortOutput(i), host.ports[i].service))
     appendFile("\n\t}")
 
 
@@ -220,8 +288,10 @@ def main():
     createTex()
     # Handle hosts:
     startHosts()
+    for hx in hostXML:
+        parseHost(hx)
     for h in hosts:
-        parseHost(h)
+        addHost(h)
     endHosts()
     # Handle users:
     if not usersFile == '':

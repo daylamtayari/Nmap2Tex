@@ -3,9 +3,11 @@
 __version__ = '0.1'
 __author__ = 'Daylam Tayari'
 
+from os import rename
 import sys
 import re
 from xml.dom import minidom
+from collections import OrderedDict
 
 # Global Variables:
 
@@ -17,6 +19,23 @@ nmapScan = ''
 hostXML = ''
 hosts = []
 users = []
+
+# Services Dictionary:
+
+services = OrderedDict([
+            ('Microsoft Terminal Services', 'Windows RDP'),
+            ('Apache httpd', 'Apache HTTP Server'),
+            ('Dropbear sshd', 'Dropbear SSH'),
+            ('Active Directory LDAP', 'Active Directory LDAP'),
+            ('Windows RPC over HTTP', 'Windows RPC over HTTP'),
+            ('Microsoft Windows RPC', 'Windows RPC'),
+            ('microsoft-ds', 'Windows SMB'),
+            ('netbios-ssn', 'NetBIOS'),
+            ('Kerberos', 'Windows Kerberos'),
+            ('HTTPAPI', 'HTTPAPI'),
+            ('ms-wbt-server', 'Windows RDP (WBT)'),
+            ('Cockpit web service', 'Cockpit Web Administration')
+        ])
 
 
 # Object Classes:
@@ -80,7 +99,7 @@ class Port:
         else:
             output += self.service.product
         if self.service.version != '':
-            output += ' ' + self.service.version
+            output += ' v' + self.service.version
         return output
 
 
@@ -162,6 +181,13 @@ def xmlHandling():
     hostXML = nmapScan.getElementsByTagName("host")
 
 
+def renameServices(serv):
+    for s in services:
+        if s in serv:
+            return services.get(s)
+    return serv
+
+
 def parseHost(host):
     ip = host.getElementsByTagName("address")[0].getAttribute("addr")
     opSys = host.getElementsByTagName("os")[0].getElementsByTagName("osmatch")
@@ -180,9 +206,9 @@ def parseHost(host):
             hst.addService(port_id, 'Unknown')
         else:
             serv = port.getElementsByTagName("service")[0]
-            hst.addService(port_id, serv.getAttribute("name"))
+            hst.addService(port_id, renameServices(serv.getAttribute("name")))
             if serv.getAttribute("product") != '':
-                hst.addServiceProduct(port_id, serv.getAttribute("product"))
+                hst.addServiceProduct(port_id, renameServices(serv.getAttribute("product")))
             if serv.getAttribute("version") != '':
                 vers = re.search(r'^([0-9][\.0-9a-z]*)|[\ _]([0-9][\.0-9]*)', serv.getAttribute("version"))
                 if vers is not None and vers.group(1) is not None:
@@ -191,10 +217,7 @@ def parseHost(host):
                     vers = vers.group(2)
                 else:
                     vers = ''
-                print('version: '+vers)
                 hst.addServiceVersion(port_id, vers)
-            if "Microsoft" in hst.getService(port_id):
-                hst.ports[port_id].service.product = hst.getService(port_id)[10:]
         # Check for PC name if available:
         if not port.getElementsByTagName("script") == []:
             script = port.getElementsByTagName("script")[0]
@@ -279,7 +302,7 @@ def startHosts():
 
 def addHost(host):
     appendFile('\n\t' + r"\host{%s}{%s}{%s}{" % (host.hostname, host.ip, host.os))
-    if not host.portsOpen:
+    if not host.portsOpen():
         appendFile('\n\t\t' + r"\portserv{None}{None}")
     else:
         for i in range(len(host.ports)):

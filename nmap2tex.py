@@ -4,6 +4,7 @@ __version__ = '0.1'
 __author__ = 'Daylam Tayari'
 
 import sys
+import re
 from xml.dom import minidom
 
 # Global Variables:
@@ -31,7 +32,7 @@ class Host:
         self._vuln_id = 0
 
     def getService(self, port_id):
-        return self.ports[port_id].service
+        return self.ports[port_id].getService()
 
     def getPortOutput(self, port_id):
         return self.ports[port_id].port + '/' + self.ports[port_id].protocol.upper()
@@ -49,7 +50,13 @@ class Host:
         return (self._port_id - 1)
 
     def addService(self, port_id, service_name):
-        self.ports[port_id].service = service_name
+        self.ports[port_id].service = Service(service_name)
+
+    def addServiceProduct(self, port_id, product):
+        self.ports[port_id].service.product = product
+
+    def addServiceVersion(self, port_id, version):
+        self.ports[port_id].service.version = version
 
     def addVuln(self, cve, cvss, port):
         new_vuln = Vuln(cve, cvss, port)
@@ -62,7 +69,19 @@ class Port:
     def __init__(self, port, protocol):
         self.port = port
         self.protocol = protocol
-        self.service = 'Unknown'
+        self.service = None
+
+    def getService(self):
+        output = ''
+        if self.service is None:
+            return 'Unknown'
+        elif self.service.product == '':
+            output += self.service.name
+        else:
+            output += self.service.product
+        if self.service.version != '':
+            output += ' ' + self.service.version
+        return output
 
 
 class Service:
@@ -161,12 +180,21 @@ def parseHost(host):
             hst.addService(port_id, 'Unknown')
         else:
             serv = port.getElementsByTagName("service")[0]
-            if serv.getAttribute("product") == '':
-                hst.addService(port_id, serv.getAttribute("name"))
-            else:
-                hst.addService(port_id, serv.getAttribute("product"))
+            hst.addService(port_id, serv.getAttribute("name"))
+            if serv.getAttribute("product") != '':
+                hst.addServiceProduct(port_id, serv.getAttribute("product"))
+            if serv.getAttribute("version") != '':
+                vers = re.search(r'^([0-9][\.0-9a-z]*)|[\ _]([0-9][\.0-9]*)', serv.getAttribute("version"))
+                if vers is not None and vers.group(1) is not None:
+                    vers = vers.group(1)
+                elif vers is not None and vers.group(2) is not None:
+                    vers = vers.group(2)
+                else:
+                    vers = ''
+                print('version: '+vers)
+                hst.addServiceVersion(port_id, vers)
             if "Microsoft" in hst.getService(port_id):
-                hst.ports[port_id].service = hst.getService(port_id)[10:]
+                hst.ports[port_id].service.product = hst.getService(port_id)[10:]
         # Check for PC name if available:
         if not port.getElementsByTagName("script") == []:
             script = port.getElementsByTagName("script")[0]
@@ -255,7 +283,7 @@ def addHost(host):
         appendFile('\n\t\t' + r"\portserv{None}{None}")
     else:
         for i in range(len(host.ports)):
-            appendFile('\n\t\t' + r"\portserv{%s}{%s}" % (host.getPortOutput(i), host.ports[i].service))
+            appendFile('\n\t\t' + r"\portserv{%s}{%s}" % (host.getPortOutput(i), host.ports[i].getService()))
     appendFile("\n\t}")
 
 

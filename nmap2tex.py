@@ -52,6 +52,8 @@ class Host:
         self._port_id = 0
         self.vulns = []
         self._vuln_id = 0
+        self.vuln_host = False
+        return
 
     def get_service(self, port_id):
         return self.ports[port_id].get_service()
@@ -60,6 +62,7 @@ class Host:
         for p in self.ports:
             if p.port == _port:
                 return p.get_service()
+        return
 
     def get_port_output(self, port_id):
         return self.ports[port_id].port + '/' + self.ports[port_id].protocol.upper()
@@ -84,12 +87,15 @@ class Host:
 
     def add_service(self, port_id, service_name):
         self.ports[port_id].service = Service(service_name)
+        return
 
     def add_serviceProduct(self, port_id, product):
         self.ports[port_id].service.product = product
+        return
 
     def add_serviceVersion(self, port_id, version):
         self.ports[port_id].service.version = version
+        return
 
     def add_vuln(self, cve, cvss, port):
         new_vuln = Vuln(cve, cvss, port)
@@ -114,6 +120,7 @@ class Host:
                 return 'Yellow'
             else:
                 return 'Green'
+        return
 
 
 class Port:
@@ -121,6 +128,7 @@ class Port:
         self.port = port
         self.protocol = protocol
         self.service = None
+        return
 
     def get_service(self):
         _output = ''
@@ -140,6 +148,7 @@ class Service:
         self.name = name
         self.product = ''
         self.version = ''
+        return
 
 
 class Vuln:
@@ -147,12 +156,14 @@ class Vuln:
         self.cve = cve
         self.cvss = cvss
         self.port = port
+        return
 
 
 class User:
     def __init__(self, name):
         self.admin = False
         self.name = name
+        return
 
 
 # Input Handling:
@@ -192,11 +203,11 @@ if args.vuln:
 
 # XML File Handling:
 
-
 def xml_handling():
     global nmap_scan, host_xml
     nmap_scan = minidom.parse(nmap_file)
     host_xml = nmap_scan.getElementsByTagName("host")
+    return
 
 
 def rename_services(serv):
@@ -272,6 +283,7 @@ def parse_host(host):
                         hst.add_vuln(cveid, cvss, port.getAttribute("portid"))
     global hosts
     hosts.append(hst)
+    return
 
 
 # Users File Handling:
@@ -288,6 +300,7 @@ def get_users():
         global users
         users = data.split(user_seperator)
     file.close()
+    return
 
 
 def admin_handling(user):
@@ -315,6 +328,7 @@ def handle_users():
                 add_users(admin_handling(lastUsers[0]), admin_handling(lastUsers[1]), admin_handling(lastUsers[2]), admin_handling(lastUsers[3]), admin_handling(lastUsers[4]), admin_handling(lastUsers[5]))
             else:
                 add_users(admin_handling(users[i]), admin_handling(users[i + 1]), admin_handling(users[i + 2]), admin_handling(users[i + 3]), admin_handling(users[i + 4]), admin_handling(users[i + 5]))
+    return
 
 
 # File Handling:
@@ -324,12 +338,14 @@ def create_file():
     # Allows us to also wipe the file if it already contains something.
     file.write("")
     file.close()
+    return
 
 
 def append_file(content):
     file = open(latex_file, "a")
     file.write(content)
     file.close()
+    return
 
 
 def read_file(file):
@@ -345,10 +361,12 @@ def create_tex():
     content = read_file("template.tex")
     create_file()
     append_file(content)
+    return
 
 
 def start_hosts():
     append_file('\n' + r"\hosttable{")
+    return
 
 
 def add_host(host):
@@ -359,26 +377,32 @@ def add_host(host):
         for i in range(len(host.ports)):
             append_file('\n\t\t' + r"\portserv{%s}{%s}" % (host.get_port_output(i), host.ports[i].get_service()))
     append_file("\n\t}")
+    return
 
 
 def end_hosts():
     append_file("\n}")
+    return
 
 
 def start_users():
     append_file('\n' + r"\vspace{0.9cm}" + '\n' + r"\usertble{")
+    return
 
 
 def add_users(user1, user2, user3, user4, user5, user6):
     append_file('\n\t' + r"\user{%s}{%s}{%s}{%s}{%s}{%s}" % (user1, user2, user3, user4, user5, user6))
+    return
 
 
 def end_users():
     append_file("\n}")
+    return
 
 
 def start_vuln():
     append_file('\n' + r"\vspace{0.9cm}" + '\n')
+    return
 
 
 def add_vulns(host):
@@ -389,10 +413,12 @@ def add_vulns(host):
         for v in range(len(host.vulns)):
             append_file('\n\t' + r"\vuln{%s: %s}{%s}" % (host.get_port_service(host.vulns[v].port), host.vulns[v].cve, host.vulns[v].cvss))
     append_file('\n}')
+    return
 
 
 def end_file():
     append_file('\n' + r"\end{document}")
+    return
 
 
 # Core Program Handling:
@@ -428,6 +454,7 @@ def main():
         handle_users()
         end_users()
     end_file()
+    return
 
 
 main()

@@ -296,16 +296,21 @@ def nmap_handling():
 # Vulnerability File Handling:
 
 def vuln_handling():
-    vuln_xml = xml_handling(vuln_file)
-    vuln_hosts = vuln_xml.getElementsByTagName("host")
-    for h in vuln_hosts:
-        hst = parse_host(h)
-        for host in hosts:
-            if host.ip == hst.ip:
-                hosts.pop()
-                host.vuln_host = True
-            else:
-                hst.vuln_host = True
+    vuln_hosts = hosts
+    if not vuln_file == '':
+        vuln_xml = xml_handling(vuln_file)
+        vuln_hosts = vuln_xml.getElementsByTagName("host")
+        for h in vuln_hosts:
+            hst = parse_host(h)
+            for host in hosts:
+                if host.ip == hst.ip:
+                    hosts.pop()
+                    host.vuln_host = True
+                else:
+                    hst.vuln_host = True
+    else:
+        for h in hosts:
+            h.vuln_host = True
     start_vuln()
     for h in hosts:
         if h.vuln_host:

@@ -7,13 +7,16 @@
 \usepackage{xstring}
 \usepackage{xintexpr}
 
+% Custom command to create fully lower case compatible with other commands.
+% Here it is used to ensure that the general host vulnerability classification also colours the header of the host's vulnerability table.
 \ExplSyntaxOn
-\cs_new_eq:NN \LowerCase \text_lowercase:n
+\cs_new_eq:NN \LowerCase \text_lowercase:n 
 \ExplSyntaxOff
 
 \setlength{\parindent}{0em}
 \renewcommand{\arraystretch}{1.5}
 
+% Colours used to colour code the CVEs. Colours are based on the CVSS v3.0 standard.
 \definecolor{None}{RGB}{157,195,231}
 \definecolor{Low}{RGB}{255,255,103}
 \definecolor{Medium}{RGB}{255,192,0}
@@ -21,6 +24,7 @@
 \definecolor{Critcal}{RGB}{254,0,0}
 
 \renewcommand{\title}[1]{
+    % Creates the left-aligned title at the top of the page.
     \begin{flushleft}
         \Large
         \textbf{#1}
@@ -34,6 +38,7 @@
 }
 
 \newcommand{\hosttable}[1]{
+    % Inventory table
     \begin{longtable}{ | l | l | l | @{}c@{} | }
         \hline
         \textbf{Host Name:} & \textbf{Public IP:} & \textbf{Operating System:} & \hspace{0.04cm} \textbf{Ports and Services:} \\
@@ -51,6 +56,7 @@
 }
 
 \newcommand{\host}[4]{
+    % Individual host row
     #1 & #2 & #3 &
     \begin{tabular}{ l | l }
         \textbf{Ports:}\hspace{1cm} & \textbf{Services:}\hspace{4cm} \\
@@ -61,12 +67,14 @@
 }
 
 \newcommand{\portserv}[2]{
+    % Port and service that displays in its corresponding host's row.
     \hline
 
     #1 & #2 \\
 }
 
 \newcommand{\usertble}[1]{
+    % Table of all the users.
     \begin{tabular}{ | @{}c@{} | }
         \hline
         \textbf{Users\:} \\
@@ -78,12 +86,14 @@
 }
 
 \newcommand{\user}[6]{
+    % One row of users.
     #1 & #2 & #3 & #4 & #5 & #6 \\
 
     \hline
 }
 
 \newcommand{\systemvuln}[4]{
+    % Vulnerability report tables.
     \begin{longtable}{ | l | c | }
         \hline
         \textbf{#1 - #2} & \cellcolor{\LowerCase{#3}}\textbf{#3} \\
@@ -103,6 +113,8 @@
 }
 
 \newcommand{\evalVuln}[1]{%
+    % Evaluates a CVE's rating to determine whether its corresponding colour.
+    % Colours are based on the CVSS v3.0 standard.
     \xintifboolexpr{#1=0.0}
         {None}%
         {\xintifboolexpr{#1>0.0 && #1<4.0}
@@ -115,10 +127,12 @@
 }
 
 \newcommand{\vuln}[2]{
+    % Individual vulnerability.
     \hline
     \rowcolor{\evalVuln{#2}} 
     #1 & \evalVuln{#2} - #2 \\
 }
+
 
 \begin{document}
 

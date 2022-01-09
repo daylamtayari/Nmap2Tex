@@ -3,6 +3,8 @@
 __version__ = '0.1'
 __author__ = 'Daylam Tayari'
 
+# Imports:
+
 import re
 import argparse
 import json
@@ -11,7 +13,7 @@ from os.path import exists
 from xml.dom import minidom
 from collections import OrderedDict
 
-# Global Variables:
+# Global Variables and Constants:
 
 SERVICES_URL = "https://git.tayari.gg/tayari/nmap2tex/-/raw/master/services.json"
 nmap_file = ''
@@ -29,6 +31,7 @@ services = OrderedDict([])
 # Object Classes:
 
 class Host:
+    # Host object class which contains all of the values and child objects of a particular network host.
     def __init__(self, ip, os):
         self.ip = ip
         self.os = os
@@ -42,9 +45,11 @@ class Host:
         return
 
     def get_service(self, port_id):
+        # Gets the service of a particular port.
         return self.ports[port_id].get_service()
 
     def get_port_service(self, _port):
+        # Gets the services for all of the ports.
         for p in self.ports:
             if p.port == _port:
                 return p.get_service()
@@ -54,12 +59,14 @@ class Host:
         return self.ports[port_id].port + '/' + self.ports[port_id].protocol.upper()
 
     def ports_open(self):
+        # Checks if the host has any open ports.
         if len(self.ports) > 0:
             return True
         else:
             return False
 
     def has_vulns(self):
+        # Checks if the host has any vulnerabilities.
         if len(self.vulns) > 0:
             return True
         else:
@@ -97,6 +104,7 @@ class Host:
                     return i
 
     def vuln_status(self):
+        # Overall vulnerability status of the host with any high or critical CVEs causing a red rating.
         if len(self.vulns) == 0:
             return 'Green'
         for v in self.vulns:
@@ -106,10 +114,10 @@ class Host:
                 return 'Yellow'
             else:
                 return 'Green'
-        return
 
 
 class Port:
+    # Port object which contains the information and children classes of a port.
     def __init__(self, port, protocol):
         self.port = port
         self.protocol = protocol
@@ -117,6 +125,7 @@ class Port:
         return
 
     def get_service(self):
+        # Get the service running on the particular port.
         _output = ''
         if self.service is None:
             return 'Unknown'
@@ -130,6 +139,7 @@ class Port:
 
 
 class Service:
+    # Service object which contains the information about the service that corresponds to a particular port.
     def __init__(self, name):
         self.name = name
         self.product = ''
@@ -138,6 +148,7 @@ class Service:
 
 
 class Vuln:
+    # Vulnerability object which contains information about the vulnerability.
     def __init__(self, cve, cvss, port):
         self.cve = cve
         self.cvss = cvss
@@ -146,6 +157,7 @@ class Vuln:
 
 
 class User:
+    # User object containing nformation about a particular user.
     def __init__(self, name):
         self.admin = False
         self.name = name
@@ -192,14 +204,17 @@ if args.vuln:
 # Services Handling:
 
 def parse_services():
+    # Retrieve all the services from the file and place them into an ordered dictionary allowing the order of the JSON file to be retained.
     json_services = read_file(services_file)
     global services
     services = json.JSONDecoder(object_pairs_hook=OrderedDict).decode(json_services)
+    print(services)
     return
 
 
 def handle_services():
     if args.services_update or not exists('services.json'):
+        # If the services file doesn't exist or was asked to be updated, retrieve it.
         new_services = requests.get(SERVICES_URL).content
         open('services.json', 'wb').write(new_services)
     parse_services()
@@ -213,6 +228,7 @@ def xml_handling(file):
 
 
 def rename_services(serv):
+    # Rename services if the corresponding human readable name is provided in the services file.
     for s in services:
         if s in serv:
             return services.get(s)
@@ -220,6 +236,7 @@ def rename_services(serv):
 
 
 def parse_host(host):
+    # Parses a host retrieving information about it and storing it into the corresponding host object.
     ip = host.getElementsByTagName("address")[0].getAttribute("addr")
     if host.getElementsByTagName("os") == []:
         opSys = {}
@@ -291,6 +308,7 @@ def parse_host(host):
 # Nmap File Handling:
 
 def nmap_handling():
+    # Does the handling of the main Nmap scan file.
     nmap_scan = xml_handling(nmap_file)
     host_xml = nmap_scan.getElementsByTagName("host")
     for h in host_xml:
@@ -302,6 +320,7 @@ def nmap_handling():
 # Vulnerability File Handling:
 
 def vuln_handling():
+    # Handles vulnerabilities.
     vuln_hosts = hosts
     if not vuln_file == '':
         vuln_xml = xml_handling(vuln_file)
@@ -310,6 +329,7 @@ def vuln_handling():
             hst = parse_host(h)
             for host in hosts:
                 if host.ip == hst.ip:
+                    # Remove duplicate hosts.
                     hosts.pop()
                     host.vuln_host = True
                 else:
@@ -327,6 +347,7 @@ def vuln_handling():
 # Users File Handling:
 
 def get_users():
+    # Retrieves all the users from the given users file.
     users_separators = ['\n', '\t', ',', '.', ':', ';', '/', '\'', '-', '_', '`']
     global user_seperator
     with open(users_file) as file:
@@ -342,6 +363,7 @@ def get_users():
 
 
 def admin_handling(user):
+    # If a user is an admin, bold their name in the user list.
     if user.admin:
         return "\\textbf{" + user.name + "}"
     else:
@@ -349,6 +371,7 @@ def admin_handling(user):
 
 
 def handle_users():
+    # This handles the output of users ensuring that they appear in a 6 row grid.
     if len(users) % 6 == 0:
         for i in range(0, len(users), 6):
             add_users(admin_handling(users[i]), admin_handling(users[i+1]), admin_handling(users[i+2]), admin_handling(users[i+3]), admin_handling(users[i+4]), admin_handling(users[i+5]))

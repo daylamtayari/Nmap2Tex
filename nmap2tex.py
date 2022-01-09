@@ -46,6 +46,7 @@ class Host:
         self.ip = ip
         self.os = os
         self.hostname = 'Unknown'
+        self.domainname = 'Unknown'
         self.ports = []
         self._port_id = 0
         self.vulns = []
@@ -244,9 +245,11 @@ def parse_host(host):
             script = port.getElementsByTagName("script")[0]
             if script.getElementsByTagName("elem") != []:
                 elem = script.getElementsByTagName("elem")
-                if len(elem) > 2:
-                    if elem[2].getAttribute("key") == 'NetBIOS_Computer_Name':
-                        hst.hostname = elem[2].firstChild.data
+                for e in elem:
+                    if e.getAttribute("key") == 'NetBIOS_Computer_Name':
+                        hst.hostname = e.firstChild.data
+                    if e.getAttribute("key") == 'NetBIOS_Domain_Name':
+                        hst.domainname = e.firstChild.data
         # Check for and add vulnerabilities:
         if not port.getElementsByTagName("script") == []:
             tables = port.getElementsByTagName("script")[0].getElementsByTagName("table")

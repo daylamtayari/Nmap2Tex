@@ -20,6 +20,7 @@ nmap_scan = ''
 host_xml = ''
 hosts = []
 users = []
+user_seperator = ''
 
 # Services Dictionary:
 
@@ -171,6 +172,7 @@ parser._optionals.title = 'Optional Arguments:'
 parser.add_argument("Nmap", help="Nmap XML file")
 parser.add_argument("Output", help="Output LaTeX file")
 parser.add_argument("-u", "--users", help="File containing a list of users")
+parser.add_argument("-us", "--user-seperator", help="Custom input for character that seperates users in the users file")
 parser.add_argument("-t", "--template", default="template.tex", help="LaTeX template file")
 parser.add_argument("-s", "--services", default="services.tex", help="JSON file containing human readable names for specific services")
 parser.add_argument("-v", "--vuln", help="External Nmap vulentability scan XML file")
@@ -275,9 +277,16 @@ def parse_host(host):
 # Users File Handling:
 
 def get_users():
+    users_separators = ['\n', '\t', ',', '.', ':', ';', '/', '\'', '-', '_', '`']
     with open(users_file) as file:
-        for line in file:
-            users.append(User(line.rstrip()))
+        data = file.read()
+        if user_seperator == '':
+            for s in users_separators:
+                if data.find(s) != -1:
+                    global user_seperator
+                    user_seperator = s
+        global users
+        users = data.split(user_seperator)
     file.close()
 
 

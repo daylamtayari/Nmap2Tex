@@ -3,9 +3,8 @@
 __version__ = '0.1'
 __author__ = 'Daylam Tayari'
 
-from os import wait
-import sys
 import re
+import argparse
 from xml.dom import minidom
 from collections import OrderedDict
 
@@ -15,6 +14,8 @@ nmapFile = ''
 latexFile = ''
 usersFile = ''
 templateFile = ''
+servicesFile = ''
+vulnFile = ''
 nmapScan = ''
 hostXML = ''
 hosts = []
@@ -155,50 +156,36 @@ class User:
 
 # Input Handling:
 
-def invalidInput(num):
-    print('Nmap2Tex ' + __version__)
-    if num == 0:
-        print('Invalid Input: No inputs provided.')
-    elif num == 1:
-        print('Invalid Input: Only one input provided.')
-    elif num == 2:
-        print('Invalid Input: Only 6 inputs at most can be provided including files.')
-    elif num == 3:
-        print('Invalid input combination.')
-    print(
-        'Usage: nmap2tex <Nmap XML file> <Output LaTeX file> [-u/--users <User\'s file>] [-t/--template <Template file>]')
-    print('The Nmap file provided must be an Nmap scan output file \nformatted in Nmap\'s XML format.')
-    print(
-        'A users file can also be provided which provides a list of users \nseparated by either `,` `;`, a new line character or a tab character.')
-    print(
-        'A LaTeX template file can also be provided in an XML format. \nPlease see project documentation for more details.')
-
-
-def inputHandling():
-    if len(sys.argv) == 1:
-        return invalidInput(0)
-    elif len(sys.argv) == 2:
-        if sys.argv[1] == '-h' or sys.argv[1] == '--help':
-            return invalidInput(-1)
-        else:
-            return invalidInput(1)
-    elif len(sys.argv) > 7:
-        return invalidInput(2)
-    else:
-        global nmapFile, latexFile
-        nmapFile = sys.argv[1]
-        latexFile = sys.argv[2]
-        if len(sys.argv) == 5 or len(sys.argv) == 7:
-            global usersFile, templateFile
-            for i in range(5, 7, 2):
-                if sys.argv[i-2] == '-u' or sys.argv[i-2] == '--users':
-                    usersFile = sys.argv[i - 1]
-                elif sys.argv[i-2] == '-t' or sys.argv[i-2] == '--template':
-                    templateFile = sys.argv[i - 1]
-                else:
-                    return invalidInput(3)
-        elif not len(sys.argv) == 3:
-            return invalidInput(3)
+# Initalise Parser:
+parser = argparse.ArgumentParser(
+        prog='Nmap2Tex',
+        description='''
+        Nmap2Tex allows you to automatically create a LaTeX document
+         presenting all of the information from the provided Nmap scans.
+        ''',
+        add_help=False
+        )
+parser._positionals.title = 'Mandatory Arguments:'
+parser._optionals.title = 'Optional Arguments:'
+# Arguments:
+parser.add_argument("Nmap", help="Nmap XML file")
+parser.add_argument("Output", help="Output LaTeX file")
+parser.add_argument("-u", "--users", help="File containing a list of users")
+parser.add_argument("-t", "--template", default="template.tex", help="LaTeX template file")
+parser.add_argument("-s", "--services", default="services.tex", help="JSON file containing human readable names for specific services")
+parser.add_argument("-v", "--vuln", help="External Nmap vulentability scan XML file")
+parser.add_argument("-h", "--help", action="help", default=argparse.SUPPRESS, help="Show this help message")
+parser.add_argument("--version", action='version', version='%(prog)s '+__version__, help="Show program's version number")
+# Argument Parsing:
+args = parser.parse_args()
+nmapFile = args.Nmap
+latexFile = args.Output
+templateFile = args.template
+servicesFile = args.services
+if args.users:
+    usersFile = args.users
+if args.vuln:
+    vulnFile = args.vuln
 
 
 # XML File Handling:
@@ -408,7 +395,6 @@ def vulnsPres():
 
 
 def main():
-    inputHandling()
     xmlHandling()
     # Create and initiate LaTeX file:
     createTex()

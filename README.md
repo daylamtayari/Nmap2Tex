@@ -23,4 +23,4 @@ You can however, change the contents of the commands to your liking without caus
 
 ## Usage:
 
-`nmap2tex <Nmap XML file> <Output LaTeX> [-u/--users <User's file>] [-t/--template <LaTeX template file>]`
+`Nmap2Tex [-u USERS] [-t TEMPLATE] [-s SERVICES] [-v VULN] [-h] [--version] Nmap Output`

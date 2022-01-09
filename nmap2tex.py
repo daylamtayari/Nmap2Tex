@@ -10,14 +10,14 @@ from collections import OrderedDict
 
 # Global Variables:
 
-nmapFile = ''
-latexFile = ''
-usersFile = ''
-templateFile = ''
-servicesFile = ''
-vulnFile = ''
-nmapScan = ''
-hostXML = ''
+nmap_file = ''
+latex_file = ''
+users_file = ''
+template_file = ''
+services_file = ''
+vuln_file = ''
+nmap_scan = ''
+host_xml = ''
 hosts = []
 users = []
 
@@ -51,45 +51,45 @@ class Host:
         self.vulns = []
         self._vuln_id = 0
 
-    def getService(self, port_id):
-        return self.ports[port_id].getService()
+    def get_service(self, port_id):
+        return self.ports[port_id].get_service()
 
-    def getPortService(self, _port):
+    def get_port_service(self, _port):
         for p in self.ports:
             if p.port == _port:
-                return p.getService()
+                return p.get_service()
 
-    def getPortOutput(self, port_id):
+    def get_port_output(self, port_id):
         return self.ports[port_id].port + '/' + self.ports[port_id].protocol.upper()
 
-    def portsOpen(self):
+    def ports_open(self):
         if len(self.ports) > 0:
             return True
         else:
             return False
 
-    def hasVulns(self):
+    def has_vulns(self):
         if len(self.vulns) > 0:
             return True
         else:
             return False
 
-    def addPort(self, port, protocol):
+    def add_port(self, port, protocol):
         new_port = Port(port, protocol)
         self.ports.append(new_port)
         self._port_id += 1
         return (self._port_id - 1)
 
-    def addService(self, port_id, service_name):
+    def add_service(self, port_id, service_name):
         self.ports[port_id].service = Service(service_name)
 
-    def addServiceProduct(self, port_id, product):
+    def add_serviceProduct(self, port_id, product):
         self.ports[port_id].service.product = product
 
-    def addServiceVersion(self, port_id, version):
+    def add_serviceVersion(self, port_id, version):
         self.ports[port_id].service.version = version
 
-    def addVuln(self, cve, cvss, port):
+    def add_vuln(self, cve, cvss, port):
         new_vuln = Vuln(cve, cvss, port)
         if self._vuln_id == 0 or float(cvss) > float(self.vulns[self._vuln_id - 1].cvss):
             self.vulns.append(new_vuln)
@@ -102,7 +102,7 @@ class Host:
                     self._vuln_id += 1
                     return i
 
-    def vulnStatus(self):
+    def vuln_status(self):
         if len(self.vulns) == 0:
             return 'Green'
         for v in self.vulns:
@@ -120,17 +120,17 @@ class Port:
         self.protocol = protocol
         self.service = None
 
-    def getService(self):
-        output = ''
+    def get_service(self):
+        _output = ''
         if self.service is None:
             return 'Unknown'
         elif self.service.product == '':
-            output += self.service.name
+            _output += self.service.name
         else:
-            output += self.service.product
+            _output += self.service.product
         if self.service.version != '':
-            output += ' v' + self.service.version
-        return output
+            _output += ' v' + self.service.version
+        return _output
 
 
 class Service:
@@ -148,9 +148,8 @@ class Vuln:
 
 
 class User:
-    admin = False
-
     def __init__(self, name):
+        self.admin = False
         self.name = name
 
 
@@ -178,33 +177,33 @@ parser.add_argument("-h", "--help", action="help", default=argparse.SUPPRESS, he
 parser.add_argument("--version", action='version', version='%(prog)s '+__version__, help="Show program's version number")
 # Argument Parsing:
 args = parser.parse_args()
-nmapFile = args.Nmap
-latexFile = args.Output
-templateFile = args.template
-servicesFile = args.services
+nmap_file = args.Nmap
+latex_file = args.Output
+template_file = args.template
+services_file = args.services
 if args.users:
-    usersFile = args.users
+    users_file = args.users
 if args.vuln:
-    vulnFile = args.vuln
+    vuln_file = args.vuln
 
 
 # XML File Handling:
 
 
-def xmlHandling():
-    global nmapScan, hostXML
-    nmapScan = minidom.parse(nmapFile)
-    hostXML = nmapScan.getElementsByTagName("host")
+def xml_handling():
+    global nmap_scan, host_xml
+    nmap_scan = minidom.parse(nmap_file)
+    host_xml = nmap_scan.getElementsByTagName("host")
 
 
-def renameServices(serv):
+def rename_services(serv):
     for s in services:
         if s in serv:
             return services.get(s)
     return serv
 
 
-def parseHost(host):
+def parse_host(host):
     ip = host.getElementsByTagName("address")[0].getAttribute("addr")
     if host.getElementsByTagName("os") == []:
         opSys = {}
@@ -223,14 +222,14 @@ def parseHost(host):
     else:
         portInfo = host.getElementsByTagName("ports")[0].getElementsByTagName("port")
     for port in portInfo:
-        port_id = hst.addPort(port.getAttribute("portid"), port.getAttribute("protocol"))
+        port_id = hst.add_port(port.getAttribute("portid"), port.getAttribute("protocol"))
         if port.getElementsByTagName("service") == []:
-            hst.addService(port_id, 'Unknown')
+            hst.add_service(port_id, 'Unknown')
         else:
             serv = port.getElementsByTagName("service")[0]
-            hst.addService(port_id, renameServices(serv.getAttribute("name")))
+            hst.add_service(port_id, rename_services(serv.getAttribute("name")))
             if serv.getAttribute("product") != '':
-                hst.addServiceProduct(port_id, renameServices(serv.getAttribute("product")))
+                hst.add_serviceProduct(port_id, rename_services(serv.getAttribute("product")))
             if serv.getAttribute("version") != '':
                 vers = re.search(r'^([0-9][\.0-9a-z]*)|[\ _]([0-9][\.0-9]*)', serv.getAttribute("version"))
                 if vers is not None and vers.group(1) is not None:
@@ -239,7 +238,7 @@ def parseHost(host):
                     vers = vers.group(2)
                 else:
                     vers = ''
-                hst.addServiceVersion(port_id, vers)
+                hst.add_serviceVersion(port_id, vers)
         # Check for PC name if available:
         if port.getElementsByTagName("script") != []:
             script = port.getElementsByTagName("script")[0]
@@ -265,31 +264,31 @@ def parseHost(host):
                         elif e.getAttribute("key") == "id":
                             cveid = e.firstChild.data
                     if cve:
-                        hst.addVuln(cveid, cvss, port.getAttribute("portid"))
+                        hst.add_vuln(cveid, cvss, port.getAttribute("portid"))
     global hosts
     hosts.append(hst)
 
 
 # Users File Handling:
 
-def getUsers():
-    with open(usersFile) as file:
+def get_users():
+    with open(users_file) as file:
         for line in file:
             users.append(User(line.rstrip()))
     file.close()
 
 
-def adminHandling(user):
+def admin_handling(user):
     if user.admin:
         return "\\textbf{" + user.name + "}"
     else:
         return user.name
 
 
-def handleUsers():
+def handle_users():
     if len(users) % 6 == 0:
         for i in range(0, len(users), 6):
-            addUsers(adminHandling(users[i]), adminHandling(users[i+1]), adminHandling(users[i+2]), adminHandling(users[i+3]), adminHandling(users[i+4]), adminHandling(users[i+5]))
+            add_users(admin_handling(users[i]), admin_handling(users[i+1]), admin_handling(users[i+2]), admin_handling(users[i+3]), admin_handling(users[i+4]), admin_handling(users[i+5]))
     else:
         diff = len(users) % 6
         for i in range(0, len(users) + diff, 6):
@@ -301,27 +300,27 @@ def handleUsers():
                         lastUsers.append("")
                     else:
                         lastUsers.append(users[i+j])
-                addUsers(adminHandling(lastUsers[0]), adminHandling(lastUsers[1]), adminHandling(lastUsers[2]), adminHandling(lastUsers[3]), adminHandling(lastUsers[4]), adminHandling(lastUsers[5]))
+                add_users(admin_handling(lastUsers[0]), admin_handling(lastUsers[1]), admin_handling(lastUsers[2]), admin_handling(lastUsers[3]), admin_handling(lastUsers[4]), admin_handling(lastUsers[5]))
             else:
-                addUsers(adminHandling(users[i]), adminHandling(users[i + 1]), adminHandling(users[i + 2]), adminHandling(users[i + 3]), adminHandling(users[i + 4]), adminHandling(users[i + 5]))
+                add_users(admin_handling(users[i]), admin_handling(users[i + 1]), admin_handling(users[i + 2]), admin_handling(users[i + 3]), admin_handling(users[i + 4]), admin_handling(users[i + 5]))
 
 
 # File Handling:
 
-def createFile():
-    file = open(latexFile, "w")
+def create_file():
+    file = open(latex_file, "w")
     # Allows us to also wipe the file if it already contains something.
     file.write("")
     file.close()
 
 
-def appendFile(content):
-    file = open(latexFile, "a")
+def append_file(content):
+    file = open(latex_file, "a")
     file.write(content)
     file.close()
 
 
-def readFile(file):
+def read_file(file):
     f = open(file, "r")
     content = f.read()
     f.close()
@@ -330,93 +329,93 @@ def readFile(file):
 
 # LaTeX Handling:
 
-def createTex():
-    content = readFile("template.tex")
-    createFile()
-    appendFile(content)
+def create_tex():
+    content = read_file("template.tex")
+    create_file()
+    append_file(content)
 
 
-def startHosts():
-    appendFile('\n' + r"\hosttable{")
+def start_hosts():
+    append_file('\n' + r"\hosttable{")
 
 
-def addHost(host):
-    appendFile('\n\t' + r"\host{%s}{%s}{%s}{" % (host.hostname, host.ip, host.os))
-    if not host.portsOpen():
-        appendFile('\n\t\t' + r"\portserv{None}{None}")
+def add_host(host):
+    append_file('\n\t' + r"\host{%s}{%s}{%s}{" % (host.hostname, host.ip, host.os))
+    if not host.ports_open():
+        append_file('\n\t\t' + r"\portserv{None}{None}")
     else:
         for i in range(len(host.ports)):
-            appendFile('\n\t\t' + r"\portserv{%s}{%s}" % (host.getPortOutput(i), host.ports[i].getService()))
-    appendFile("\n\t}")
+            append_file('\n\t\t' + r"\portserv{%s}{%s}" % (host.get_port_output(i), host.ports[i].get_service()))
+    append_file("\n\t}")
 
 
-def endHosts():
-    appendFile("\n}")
+def end_hosts():
+    append_file("\n}")
 
 
-def startUsers():
-    appendFile('\n' + r"\vspace{0.9cm}" + '\n' + r"\usertble{")
+def start_users():
+    append_file('\n' + r"\vspace{0.9cm}" + '\n' + r"\usertble{")
 
 
-def addUsers(user1, user2, user3, user4, user5, user6):
-    appendFile('\n\t' + r"\user{%s}{%s}{%s}{%s}{%s}{%s}" % (user1, user2, user3, user4, user5, user6))
+def add_users(user1, user2, user3, user4, user5, user6):
+    append_file('\n\t' + r"\user{%s}{%s}{%s}{%s}{%s}{%s}" % (user1, user2, user3, user4, user5, user6))
 
 
-def endUsers():
-    appendFile("\n}")
+def end_users():
+    append_file("\n}")
 
 
-def startVuln():
-    appendFile('\n' + r"\vspace{0.9cm}" + '\n')
+def start_vuln():
+    append_file('\n' + r"\vspace{0.9cm}" + '\n')
 
 
-def addVulns(host):
-    appendFile('\n' + r"\systemvuln{%s}{%s}{%s}{" % (host.hostname, host.ip, host.vulnStatus()))
-    if not host.hasVulns():
-        appendFile('\n\t' + r"\vuln{None}{0.0}")
+def add_vulns(host):
+    append_file('\n' + r"\systemvuln{%s}{%s}{%s}{" % (host.hostname, host.ip, host.vuln_status()))
+    if not host.has_vulns():
+        append_file('\n\t' + r"\vuln{None}{0.0}")
     else:
         for v in range(len(host.vulns)):
-            appendFile('\n\t' + r"\vuln{%s: %s}{%s}" % (host.getPortService(host.vulns[v].port), host.vulns[v].cve, host.vulns[v].cvss))
-    appendFile('\n}')
+            append_file('\n\t' + r"\vuln{%s: %s}{%s}" % (host.get_port_service(host.vulns[v].port), host.vulns[v].cve, host.vulns[v].cvss))
+    append_file('\n}')
 
 
-def endFile():
-    appendFile('\n' + r"\end{document}")
+def end_file():
+    append_file('\n' + r"\end{document}")
 
 
 # Core Program Handling:
 
-def vulnsPres():
+def vulns_pres():
     for h in hosts:
-        if h.hasVulns():
+        if h.has_vulns():
             return True
     else:
         return False
 
 
 def main():
-    xmlHandling()
+    xml_handling()
     # Create and initiate LaTeX file:
-    createTex()
+    create_tex()
     # Handle hosts:
-    startHosts()
-    for hx in hostXML:
-        parseHost(hx)
+    start_hosts()
+    for hx in host_xml:
+        parse_host(hx)
     for h in hosts:
-        addHost(h)
-    endHosts()
+        add_host(h)
+    end_hosts()
     # Handle vulnerabilities:
-    if vulnsPres():
-        startVuln()
+    if vulns_pres():
+        start_vuln()
         for hv in hosts:
-            addVulns(hv)
+            add_vulns(hv)
     # Handle users:
-    if not usersFile == '':
-        getUsers()
-        startUsers()
-        handleUsers()
-        endUsers()
-    endFile()
+    if not users_file == '':
+        get_users()
+        start_users()
+        handle_users()
+        end_users()
+    end_file()
 
 
 main()

@@ -16,8 +16,6 @@ users_file = ''
 template_file = ''
 services_file = ''
 vuln_file = ''
-nmap_scan = ''
-host_xml = ''
 hosts = []
 users = []
 user_seperator = ''
@@ -187,6 +185,7 @@ parser.add_argument("-us", "--user-seperator", help="Custom input for character 
 parser.add_argument("-t", "--template", default="template.tex", help="LaTeX template file")
 parser.add_argument("-s", "--services", default="services.tex", help="JSON file containing human readable names for specific services")
 parser.add_argument("-v", "--vuln", help="External Nmap vulentability scan XML file")
+parser.add_argument("-vr", "--vuln-report", action='store_true', help="Create a vulnerability report even if no external vulnerability scan file has been provided")
 parser.add_argument("-h", "--help", action="help", default=argparse.SUPPRESS, help="Show this help message")
 parser.add_argument("--version", action='version', version='%(prog)s '+__version__, help="Show program's version number")
 # Argument Parsing:
@@ -203,11 +202,8 @@ if args.vuln:
 
 # XML File Handling:
 
-def xml_handling():
-    global nmap_scan, host_xml
-    nmap_scan = minidom.parse(nmap_file)
-    host_xml = nmap_scan.getElementsByTagName("host")
-    return
+def xml_handling(file):
+    return minidom.parse(file)
 
 
 def rename_services(serv):
@@ -283,6 +279,37 @@ def parse_host(host):
                         hst.add_vuln(cveid, cvss, port.getAttribute("portid"))
     global hosts
     hosts.append(hst)
+    return hst
+
+
+# Nmap File Handling:
+
+def nmap_handling():
+    nmap_scan = xml_handling(nmap_file)
+    host_xml = nmap_scan.getElementsByTagName("host")
+    for h in host_xml:
+        parse_host(h)
+    nmap_output()
+    return
+
+
+# Vulnerability File Handling:
+
+def vuln_handling():
+    vuln_xml = xml_handling(vuln_file)
+    vuln_hosts = vuln_xml.getElementsByTagName("host")
+    for h in vuln_hosts:
+        hst = parse_host(h)
+        for host in hosts:
+            if host.ip == hst.ip:
+                hosts.pop()
+                host.vuln_host = True
+            else:
+                hst.vuln_host = True
+    start_vuln()
+    for h in hosts:
+        if h.vuln_host:
+            add_vulns(h)
     return
 
 
@@ -290,12 +317,12 @@ def parse_host(host):
 
 def get_users():
     users_separators = ['\n', '\t', ',', '.', ':', ';', '/', '\'', '-', '_', '`']
+    global user_seperator
     with open(users_file) as file:
         data = file.read()
         if user_seperator == '':
             for s in users_separators:
                 if data.find(s) != -1:
-                    global user_seperator
                     user_seperator = s
         global users
         users = data.split(user_seperator)
@@ -421,6 +448,17 @@ def end_file():
     return
 
 
+# Output Handling:
+
+def nmap_output():
+    start_hosts()
+    for h in hosts:
+        if not h.vuln_host:
+            add_host(h)
+    end_hosts()
+    return
+
+
 # Core Program Handling:
 
 def vulns_pres():
@@ -432,21 +470,13 @@ def vulns_pres():
 
 
 def main():
-    xml_handling()
     # Create and initiate LaTeX file:
     create_tex()
-    # Handle hosts:
-    start_hosts()
-    for hx in host_xml:
-        parse_host(hx)
-    for h in hosts:
-        add_host(h)
-    end_hosts()
+    # Handle Nmap scan:
+    nmap_handling()
     # Handle vulnerabilities:
-    if vulns_pres():
-        start_vuln()
-        for hv in hosts:
-            add_vulns(hv)
+    if args.vuln_report or not vuln_file == '':
+        vuln_handling()
     # Handle users:
     if not users_file == '':
         get_users()

@@ -1,0 +1,14 @@
+{
+    "Microsoft Terminal Services": "Windows RDP",
+    "Apache httpd": "Apache HTTP Server",
+    "Dropbear sshd": "Dropbear SSH",
+    "Active Directory LDAP": "Active Directory LDAP",
+    "Windows RPC over HTTP": "Windows RPC over HTTP",
+    "Microsoft Windows RPC": "Windows RPC",
+    "microsoft-ds": "Windows SMB",
+    "netbios-ssn": "NetBIOS",
+    "Kerberos": "Windows Kerberos",
+    "HTTPAPI": "HTTPAPI",
+    "ms-wbt-server": "Windows RDP (WBT)",
+    "Cockpit web service": "Cockpit Web Administration"
+}

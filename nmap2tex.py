@@ -5,11 +5,14 @@ __author__ = 'Daylam Tayari'
 
 import re
 import argparse
+import json
+import requests
 from xml.dom import minidom
 from collections import OrderedDict
 
 # Global Variables:
 
+SERVICES_URL = "https://git.tayari.gg/tayari/nmap2tex/-/raw/master/services.json"
 nmap_file = ''
 latex_file = ''
 users_file = ''
@@ -19,23 +22,7 @@ vuln_file = ''
 hosts = []
 users = []
 user_seperator = ''
-
-# Services Dictionary:
-
-services = OrderedDict([
-            ('Microsoft Terminal Services', 'Windows RDP'),
-            ('Apache httpd', 'Apache HTTP Server'),
-            ('Dropbear sshd', 'Dropbear SSH'),
-            ('Active Directory LDAP', 'Active Directory LDAP'),
-            ('Windows RPC over HTTP', 'Windows RPC over HTTP'),
-            ('Microsoft Windows RPC', 'Windows RPC'),
-            ('microsoft-ds', 'Windows SMB'),
-            ('netbios-ssn', 'NetBIOS'),
-            ('Kerberos', 'Windows Kerberos'),
-            ('HTTPAPI', 'HTTPAPI'),
-            ('ms-wbt-server', 'Windows RDP (WBT)'),
-            ('Cockpit web service', 'Cockpit Web Administration')
-        ])
+services = OrderedDict([])
 
 
 # Object Classes:
@@ -183,7 +170,8 @@ parser.add_argument("Output", help="Output LaTeX file")
 parser.add_argument("-u", "--users", help="File containing a list of users")
 parser.add_argument("-us", "--user-seperator", help="Custom input for character that seperates users in the users file")
 parser.add_argument("-t", "--template", default="template.tex", help="LaTeX template file")
-parser.add_argument("-s", "--services", default="services.tex", help="JSON file containing human readable names for specific services")
+parser.add_argument("-s", "--services", default="services.json", help="JSON file containing human readable names for specific services")
+parser.add_argument("-su", "--services-update", action='store_true', help="Include to get the latest services file - Will OVERWRITE services.json")
 parser.add_argument("-v", "--vuln", help="External Nmap vulentability scan XML file")
 parser.add_argument("-vr", "--vuln-report", action='store_true', help="Create a vulnerability report even if no external vulnerability scan file has been provided")
 parser.add_argument("-h", "--help", action="help", default=argparse.SUPPRESS, help="Show this help message")
@@ -200,7 +188,24 @@ if args.vuln:
     vuln_file = args.vuln
 
 
-# XML File Handling:
+# Services Handling:
+
+def parse_services():
+    json_services = read_file(services_file)
+    global services
+    services = json.JSONDecoder(object_pairs_hook=OrderedDict).decode(json_services)
+    return
+
+
+def handle_services():
+    if args.services_update:
+        new_services = requests.get(SERVICES_URL).json()
+        open('services.json', 'wb').write(new_services)
+    parse_services()
+    return
+
+
+# XML Handling:
 
 def xml_handling(file):
     return minidom.parse(file)
@@ -488,6 +493,8 @@ def main():
         start_users()
         handle_users()
         end_users()
+    # Services handling:
+    handle_services()
     end_file()
     return
 

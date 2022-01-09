@@ -7,6 +7,7 @@ import re
 import argparse
 import json
 import requests
+from os.path import exists
 from xml.dom import minidom
 from collections import OrderedDict
 
@@ -198,8 +199,8 @@ def parse_services():
 
 
 def handle_services():
-    if args.services_update:
-        new_services = requests.get(SERVICES_URL).json()
+    if args.services_update or not exists('services.json'):
+        new_services = requests.get(SERVICES_URL).content
         open('services.json', 'wb').write(new_services)
     parse_services()
     return

@@ -159,8 +159,8 @@ class Vuln:
 
 class User:
     # User object containing nformation about a particular user.
-    def __init__(self, name):
-        self.admin = False
+    def __init__(self, name, super):
+        self.super = super
         self.name = name
         return
 
@@ -335,9 +335,16 @@ def vuln_handling():
 
 # Users File Handling:
 
+def user_is_super(username):
+    # Checks if a user is delmited as a superuser.
+    if re.match(r"[(\[{*\'\"]+[A-Za-z0-9]*[)\]}*\'\"]+", username) != None:
+        return True
+    return False
+
+
 def get_users():
     # Retrieves all the users from the given users file.
-    users_separators = ['\n', '\t', ',', '.', ':', ';', '/', '\'', '-', '_', '`']
+    users_separators = ['\n', '\t', ',', '.', ':', ';', '/', '\\', '-', '`']
     usernames = []
     global user_seperator
     with open(users_file) as file:
@@ -351,14 +358,17 @@ def get_users():
     if usernames[-1] == '':
         usernames.pop()
     for u in usernames:
-        users.append(User(u))
+        if user_is_super(u):
+            users.append(User(re.search(r'[(\[{*\'\"]+([A-Za-z0-9_-]*)[)\]}*\'\"]+', u).group(1), True))
+        else:
+            users.append(User(u, False))
     return
 
 
 def admin_handling(user):
     # If a user is an admin, bold their name in the user list.
-    if user.admin:
-        return "\\textbf{" + user.name + "}"
+    if user.super:
+        return "\\bfseries{" + user.name + "}"
     else:
         return user.name
 
@@ -376,7 +386,7 @@ def users_output():
                 lastUsers = []
                 for j in range(1, 7):
                     if j > lim:
-                        lastUsers.append(User(''))
+                        lastUsers.append(User('', False))
                     else:
                         lastUsers.append(users[i+j])
                 add_users(admin_handling(lastUsers[0]), admin_handling(lastUsers[1]), admin_handling(lastUsers[2]), admin_handling(lastUsers[3]), admin_handling(lastUsers[4]), admin_handling(lastUsers[5]))
@@ -501,7 +511,7 @@ def add_vulns(host):
 
 
 def end_file():
-    append_file('\n' + r"\end{document}")
+    append_file('\n\n' + r"\end{document}")
     return
 
 

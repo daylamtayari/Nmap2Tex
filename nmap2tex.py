@@ -285,6 +285,16 @@ def parse_host(host):
 
 # Nmap File Handling:
 
+def nmap_output():
+    hosts_title()
+    start_hosts()
+    for h in hosts:
+        if not h.vuln_host:
+            add_host(h)
+    end_hosts()
+    return
+
+
 def nmap_handling():
     # Does the handling of the main Nmap scan file.
     nmap_scan = xml_handling(nmap_file)
@@ -299,6 +309,8 @@ def nmap_handling():
 
 def vuln_handling():
     # Handles vulnerabilities.
+    vulns_title()
+    start_vulns()
     vuln_hosts = hosts
     if not vuln_file == '':
         vuln_xml = xml_handling(vuln_file)
@@ -315,7 +327,6 @@ def vuln_handling():
     else:
         for h in hosts:
             h.vuln_host = True
-    start_vuln()
     for h in hosts:
         if h.vuln_host:
             add_vulns(h)
@@ -375,8 +386,11 @@ def users_output():
 
 
 def user_handling():
+    users_title()
+    start_users()
     get_users()
     users_output()
+    end_users()
     return
 
 
@@ -419,7 +433,7 @@ def create_tex():
     return
 
 
-def host_title():
+def hosts_title():
     append_file('\n' + r"\section*{Network Inventory:}" + '\n')
     return
 
@@ -470,7 +484,7 @@ def vulns_title():
     return
 
 
-def start_vuln():
+def start_vulns():
     append_file('\n')
     return
 
@@ -488,17 +502,6 @@ def add_vulns(host):
 
 def end_file():
     append_file('\n' + r"\end{document}")
-    return
-
-
-# Output Handling:
-
-def nmap_output():
-    start_hosts()
-    for h in hosts:
-        if not h.vuln_host:
-            add_host(h)
-    end_hosts()
     return
 
 
@@ -522,11 +525,7 @@ def main():
         vuln_handling()
     # Handle users:
     if args.users:
-        start_users()
         user_handling()
-        end_users()
-    # Services handling:
-    handle_services()
     end_file()
     return
 

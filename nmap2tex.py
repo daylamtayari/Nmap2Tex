@@ -227,12 +227,57 @@ def xml_handling(file):
     return minidom.parse(file)
 
 
+def parse_names(host, script):
+    if script.getElementsByTagName("elem") != []:
+        elem = script.getElementsByTagName("elem")
+        for e in elem:
+            if e.getAttribute("key") == 'NetBIOS_Computer_Name':
+                host.hostname = e.firstChild.data
+            if e.getAttribute("key") == 'NetBIOS_Domain_Name':
+                host.domainname = e.firstChild.data
+    return
+
+
+def parse_vulns(host, tables, port):
+    for t in range(1, len(tables)):
+        elems = tables[t].getElementsByTagName("elem")
+        cve = False
+        cveid = ''
+        cvss = ''
+        for e in elems:
+            if e.getAttribute("key") == "type" and e.firstChild.data == "cve":
+                cve = True
+            elif e.getAttribute("key") == "cvss":
+                cvss = e.firstChild.data
+            elif e.getAttribute("key") == "id":
+                cveid = e.firstChild.data
+            if cve:
+                host.add_vuln(cveid, cvss, port.getAttribute("portid"))
+    return
+
+
 def rename_services(serv):
     # Rename services if the corresponding human readable name is provided in the services file.
     for s in services:
         if s in serv:
             return services.get(s)
     return serv
+
+
+def parse_service(host, port_id, serv):
+    host.add_service(port_id, rename_services(serv.getAttribute("name")))
+    if serv.getAttribute("product") != '':
+        host.add_serviceProduct(port_id, rename_services(serv.getAttribute("product")))
+    if serv.getAttribute("version") != '':
+        vers = re.search(r'^([0-9][\.0-9a-z]*)|[\ _]([0-9][\.0-9]*)', serv.getAttribute("version"))
+        if vers is not None and vers.group(1) is not None:
+            vers = vers.group(1)
+        elif vers is not None and vers.group(2) is not None:
+            vers = vers.group(2)
+        else:
+            vers = ''
+        host.add_serviceVersion(port_id, vers)
+    return
 
 
 def parse_host(host):
@@ -259,47 +304,15 @@ def parse_host(host):
         if port.getElementsByTagName("service") == []:
             hst.add_service(port_id, 'Unknown')
         else:
-            serv = port.getElementsByTagName("service")[0]
-            hst.add_service(port_id, rename_services(serv.getAttribute("name")))
-            if serv.getAttribute("product") != '':
-                hst.add_serviceProduct(port_id, rename_services(serv.getAttribute("product")))
-            if serv.getAttribute("version") != '':
-                vers = re.search(r'^([0-9][\.0-9a-z]*)|[\ _]([0-9][\.0-9]*)', serv.getAttribute("version"))
-                if vers is not None and vers.group(1) is not None:
-                    vers = vers.group(1)
-                elif vers is not None and vers.group(2) is not None:
-                    vers = vers.group(2)
-                else:
-                    vers = ''
-                hst.add_serviceVersion(port_id, vers)
+            parse_service(hst, port_id, port.getElementsByTagName("service")[0])
         # Check for PC name if available:
         if port.getElementsByTagName("script") != []:
-            script = port.getElementsByTagName("script")[0]
-            if script.getElementsByTagName("elem") != []:
-                elem = script.getElementsByTagName("elem")
-                for e in elem:
-                    if e.getAttribute("key") == 'NetBIOS_Computer_Name':
-                        hst.hostname = e.firstChild.data
-                    if e.getAttribute("key") == 'NetBIOS_Domain_Name':
-                        hst.domainname = e.firstChild.data
+            parse_names(hst, port.getElementsByTagName("script")[0])
         # Check for and add vulnerabilities:
         if not port.getElementsByTagName("script") == []:
             tables = port.getElementsByTagName("script")[0].getElementsByTagName("table")
             if tables != []:
-                for t in range(1, len(tables)):
-                    elems = tables[t].getElementsByTagName("elem")
-                    cve = False
-                    cveid = ''
-                    cvss = ''
-                    for e in elems:
-                        if e.getAttribute("key") == "type" and e.firstChild.data == "cve":
-                            cve = True
-                        elif e.getAttribute("key") == "cvss":
-                            cvss = e.firstChild.data
-                        elif e.getAttribute("key") == "id":
-                            cveid = e.firstChild.data
-                    if cve:
-                        hst.add_vuln(cveid, cvss, port.getAttribute("portid"))
+                parse_vulns(hst, tables, port)
     global hosts
     hosts.append(hst)
     return hst

@@ -518,6 +518,8 @@ def vulns_pres():
 def main():
     # Create and initiate LaTeX file:
     create_tex()
+    # Handle services:
+    handle_services()
     # Handle Nmap scan:
     nmap_handling()
     # Handle vulnerabilities:

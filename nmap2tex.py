@@ -312,7 +312,7 @@ def vuln_handling():
     vulns_title()
     start_vulns()
     vuln_hosts = hosts
-    if not vuln_file == '':
+    if args.vuln:
         vuln_xml = xml_handling(vuln_file)
         vuln_hosts = vuln_xml.getElementsByTagName("host")
         for h in vuln_hosts:
@@ -355,8 +355,6 @@ def get_users():
 
 def admin_handling(user):
     # If a user is an admin, bold their name in the user list.
-    if user == '':
-        return
     if user.admin:
         return "\\textbf{" + user.name + "}"
     else:
@@ -523,7 +521,7 @@ def main():
     # Handle Nmap scan:
     nmap_handling()
     # Handle vulnerabilities:
-    if args.vuln_report or not vuln_file == '':
+    if args.vuln_report or args.vuln:
         vuln_handling()
     # Handle users:
     if args.users:

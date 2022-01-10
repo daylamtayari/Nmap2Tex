@@ -172,7 +172,6 @@ def parse_services():
     json_services = read_file(services_file)
     global services
     services = json.JSONDecoder(object_pairs_hook=OrderedDict).decode(json_services)
-    print(services)
     return
 
 
@@ -328,6 +327,7 @@ def vuln_handling():
 def get_users():
     # Retrieves all the users from the given users file.
     users_separators = ['\n', '\t', ',', '.', ':', ';', '/', '\'', '-', '_', '`']
+    usernames = []
     global user_seperator
     with open(users_file) as file:
         data = file.read()
@@ -335,21 +335,24 @@ def get_users():
             for s in users_separators:
                 if data.find(s) != -1:
                     user_seperator = s
-        global users
-        users = data.split(user_seperator)
+        usernames = data.split(user_seperator)
     file.close()
+    for u in usernames:
+        users.append(User(u))
     return
 
 
 def admin_handling(user):
     # If a user is an admin, bold their name in the user list.
+    if user == '':
+        return
     if user.admin:
         return "\\textbf{" + user.name + "}"
     else:
         return user.name
 
 
-def handle_users():
+def users_output():
     # This handles the output of users ensuring that they appear in a 6 row grid.
     if len(users) % 6 == 0:
         for i in range(0, len(users), 6):
@@ -362,12 +365,18 @@ def handle_users():
                 lastUsers = []
                 for j in range(1, 7):
                     if j > lim:
-                        lastUsers.append("")
+                        lastUsers.append(User(''))
                     else:
                         lastUsers.append(users[i+j])
                 add_users(admin_handling(lastUsers[0]), admin_handling(lastUsers[1]), admin_handling(lastUsers[2]), admin_handling(lastUsers[3]), admin_handling(lastUsers[4]), admin_handling(lastUsers[5]))
             else:
                 add_users(admin_handling(users[i]), admin_handling(users[i + 1]), admin_handling(users[i + 2]), admin_handling(users[i + 3]), admin_handling(users[i + 4]), admin_handling(users[i + 5]))
+    return
+
+
+def user_handling():
+    get_users()
+    users_output()
     return
 
 
@@ -497,10 +506,9 @@ def main():
     if args.vuln_report or not vuln_file == '':
         vuln_handling()
     # Handle users:
-    if not users_file == '':
-        get_users()
+    if args.users:
         start_users()
-        handle_users()
+        user_handling()
         end_users()
     # Services handling:
     handle_services()

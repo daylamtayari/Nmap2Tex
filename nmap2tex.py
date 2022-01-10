@@ -348,6 +348,8 @@ def get_users():
                     user_seperator = s
         usernames = data.split(user_seperator)
     file.close()
+    if usernames[-1] == '':
+        usernames.pop()
     for u in usernames:
         users.append(User(u))
     return

@@ -514,7 +514,7 @@ def exist_verifier(file, name):
     if not exists(file):
         update = input(
             '\nThe ' + name + ' file at ' + eval(name + '_file') + ' cannot be found.'
-            + '\nDo you wish to download the latest version of the ' + name + 'file? [Y/n] '
+            + '\nDo you wish to download the latest version of the ' + name + ' file? [Y/n] '
         )
         if update.lower() == 'y':
             eval('update_' + name + '()')

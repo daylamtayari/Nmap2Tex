@@ -419,6 +419,11 @@ def create_tex():
     return
 
 
+def host_title():
+    append_file('\n' + r"\section*{Network Inventory:}" + '\n')
+    return
+
+
 def start_hosts():
     append_file('\n' + r"\hosttable{")
     return
@@ -440,8 +445,13 @@ def end_hosts():
     return
 
 
+def users_title():
+    append_file('\n' + r"\section*{Users:}" + '\n')
+    return
+
+
 def start_users():
-    append_file('\n' + r"\vspace{0.9cm}" + '\n' + r"\usertble{")
+    append_file('\n' + r"\usertble{")
     return
 
 
@@ -455,8 +465,13 @@ def end_users():
     return
 
 
+def vulns_title():
+    append_file('\n' + r"\section*{Vulnerability Report}" + '\n')
+    return
+
+
 def start_vuln():
-    append_file('\n' + r"\vspace{0.9cm}" + '\n')
+    append_file('\n')
     return
 
 

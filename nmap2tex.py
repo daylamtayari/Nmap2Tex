@@ -16,6 +16,7 @@ from collections import OrderedDict
 # Global Variables and Constants:
 
 SERVICES_URL = "https://git.tayari.gg/tayari/nmap2tex/-/raw/master/services.json"
+TEMPLATE_URL = "https://git.tayari.gg/tayari/nmap2tex/-/raw/master/template.tex"
 nmap_file = ''
 latex_file = ''
 users_file = ''
@@ -164,43 +165,6 @@ class User:
         return
 
 
-# Input Handling:
-
-# Initalise Parser:
-parser = argparse.ArgumentParser(
-        prog='Nmap2Tex',
-        description='''
-        Nmap2Tex allows you to automatically create a LaTeX document
-         presenting all of the information from the provided Nmap scans.
-        ''',
-        add_help=False
-        )
-parser._positionals.title = 'Mandatory Arguments:'
-parser._optionals.title = 'Optional Arguments:'
-# Arguments:
-parser.add_argument("Nmap", help="Nmap XML file")
-parser.add_argument("Output", help="Output LaTeX file")
-parser.add_argument("-u", "--users", help="File containing a list of users")
-parser.add_argument("-us", "--user-seperator", help="Custom input for character that seperates users in the users file")
-parser.add_argument("-t", "--template", default="template.tex", help="LaTeX template file")
-parser.add_argument("-s", "--services", default="services.json", help="JSON file containing human readable names for specific services")
-parser.add_argument("-su", "--services-update", action='store_true', help="Include to get the latest services file - Will OVERWRITE services.json")
-parser.add_argument("-v", "--vuln", help="External Nmap vulentability scan XML file")
-parser.add_argument("-vr", "--vuln-report", action='store_true', help="Create a vulnerability report even if no external vulnerability scan file has been provided")
-parser.add_argument("-h", "--help", action="help", default=argparse.SUPPRESS, help="Show this help message")
-parser.add_argument("--version", action='version', version='%(prog)s '+__version__, help="Show program's version number")
-# Argument Parsing:
-args = parser.parse_args()
-nmap_file = args.Nmap
-latex_file = args.Output
-template_file = args.template
-services_file = args.services
-if args.users:
-    users_file = args.users
-if args.vuln:
-    vuln_file = args.vuln
-
-
 # Services Handling:
 
 def parse_services():
@@ -212,11 +176,13 @@ def parse_services():
     return
 
 
+def update_services():
+    new_services = requests.get(SERVICES_URL).content
+    open('services.json', 'wb').write(new_services)
+    return
+
+
 def handle_services():
-    if args.services_update or not exists('services.json'):
-        # If the services file doesn't exist or was asked to be updated, retrieve it.
-        new_services = requests.get(SERVICES_URL).content
-        open('services.json', 'wb').write(new_services)
     parse_services()
     return
 
@@ -431,6 +397,12 @@ def read_file(file):
 
 # LaTeX Handling:
 
+def update_template():
+    new_template = requests.get(TEMPLATE_URL).content
+    open('template.tex', 'wb').write(new_template)
+    return
+
+
 def create_tex():
     content = read_file("template.tex")
     create_file()
@@ -534,6 +506,65 @@ def main():
     handle_services()
     end_file()
     return
+
+
+# Input Handling:
+
+def exist_verifier(file, name):
+    if not exists(file):
+        update = input(
+            '\nThe ' + name + ' file at ' + eval(name + '_file') + ' cannot be found.'
+            + '\nDo you wish to download the latest version of the ' + name + 'file? [Y/n] '
+        )
+        if update.lower() == 'y':
+            eval('update_' + name + '()')
+            return
+        else:
+            quit('\nNot updating ' + name + ' file.\nExiting...')
+
+
+# Initalise Parser:
+parser = argparse.ArgumentParser(
+        prog='Nmap2Tex',
+        description='''
+        Nmap2Tex allows you to automatically create a LaTeX document
+         presenting all of the information from the provided Nmap scans.
+        ''',
+        add_help=False
+        )
+parser._positionals.title = 'Mandatory Arguments:'
+parser._optionals.title = 'Optional Arguments:'
+# Arguments:
+parser.add_argument("Nmap", help="Nmap XML file")
+parser.add_argument("Output", help="Output LaTeX file")
+parser.add_argument("-u", "--users", help="File containing a list of users")
+parser.add_argument("-us", "--user-seperator", help="Custom input for character that seperates users in the users file")
+parser.add_argument("-t", "--template", default="template.tex", help="LaTeX template file")
+parser.add_argument("-tu", "--template-update", action='store_true', help="Retrieve latest LaTeX template file - Will OVERWRITE template.tex")
+parser.add_argument("-s", "--services", default="services.json", help="JSON file containing human readable names for specific services")
+parser.add_argument("-su", "--services-update", action='store_true', help="Retrieve latest services file - Will OVERWRITE services.json")
+parser.add_argument("-v", "--vuln", help="External Nmap vulentability scan XML file")
+parser.add_argument("-vr", "--vuln-report", action='store_true', help="Create a vulnerability report even if no external vulnerability scan file has been provided")
+parser.add_argument("-h", "--help", action="help", default=argparse.SUPPRESS, help="Show this help message")
+parser.add_argument("--version", action='version', version='%(prog)s '+__version__, help="Show program's version number")
+# Argument Parsing:
+args = parser.parse_args()
+nmap_file = args.Nmap
+latex_file = args.Output
+template_file = args.template
+services_file = args.services
+if not exists(nmap_file):
+    quit('\nNmap XML scan file not found\nExiting...')
+if args.users:
+    users_file = args.users
+if args.vuln:
+    vuln_file = args.vuln
+if args.services_update:
+    update_services()
+if args.template_update:
+    update_template()
+exist_verifier(template_file, 'template')
+exist_verifier(services_file, 'services')
 
 
 main()

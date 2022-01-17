@@ -28,8 +28,8 @@ users = []
 user_seperator = ''
 services = OrderedDict([])
 
-
 # Object Classes:
+
 
 class Host:
     # Host object class which contains all of the values and child objects of a particular network host.
@@ -57,7 +57,8 @@ class Host:
         return
 
     def get_port_output(self, port_id):
-        return self.ports[port_id].port + '/' + self.ports[port_id].protocol.upper()
+        return self.ports[port_id].port + '/' + self.ports[
+            port_id].protocol.upper()
 
     def ports_open(self):
         # Checks if the host has any open ports.
@@ -93,7 +94,8 @@ class Host:
 
     def add_vuln(self, cve, cvss, port):
         new_vuln = Vuln(cve, cvss, port)
-        if self._vuln_id == 0 or float(cvss) > float(self.vulns[self._vuln_id - 1].cvss):
+        if self._vuln_id == 0 or float(cvss) > float(
+                self.vulns[self._vuln_id - 1].cvss):
             self.vulns.append(new_vuln)
             self._vuln_id += 1
             return (self._vuln_id - 1)
@@ -167,11 +169,13 @@ class User:
 
 # Services Handling:
 
+
 def parse_services():
     # Retrieve all the services from the file and place them into an ordered dictionary allowing the order of the JSON file to be retained.
     json_services = read_file(services_file)
     global services
-    services = json.JSONDecoder(object_pairs_hook=OrderedDict).decode(json_services)
+    services = json.JSONDecoder(
+        object_pairs_hook=OrderedDict).decode(json_services)
     return
 
 
@@ -187,6 +191,7 @@ def handle_services():
 
 
 # XML Handling:
+
 
 def xml_handling(file):
     return minidom.parse(file)
@@ -232,9 +237,11 @@ def rename_services(serv):
 def parse_service(host, port_id, serv):
     host.add_service(port_id, rename_services(serv.getAttribute("name")))
     if serv.getAttribute("product") != '':
-        host.add_serviceProduct(port_id, rename_services(serv.getAttribute("product")))
+        host.add_serviceProduct(port_id,
+                                rename_services(serv.getAttribute("product")))
     if serv.getAttribute("version") != '':
-        vers = re.search(r'^([0-9][\.0-9a-z]*)|[\ _]([0-9][\.0-9]*)', serv.getAttribute("version"))
+        vers = re.search(r'^([0-9][\.0-9a-z]*)|[\ _]([0-9][\.0-9]*)',
+                         serv.getAttribute("version"))
         if vers is not None and vers.group(1) is not None:
             vers = vers.group(1)
         elif vers is not None and vers.group(2) is not None:
@@ -251,7 +258,8 @@ def parse_host(host):
     if host.getElementsByTagName("os") == []:
         opSys = {}
     else:
-        opSys = host.getElementsByTagName("os")[0].getElementsByTagName("osmatch")
+        opSys = host.getElementsByTagName("os")[0].getElementsByTagName(
+            "osmatch")
     if len(opSys) == 0:
         opSys = 'Unknown'
     else:
@@ -263,19 +271,23 @@ def parse_host(host):
     if host.getElementsByTagName("ports") == []:
         portInfo = []
     else:
-        portInfo = host.getElementsByTagName("ports")[0].getElementsByTagName("port")
+        portInfo = host.getElementsByTagName("ports")[0].getElementsByTagName(
+            "port")
     for port in portInfo:
-        port_id = hst.add_port(port.getAttribute("portid"), port.getAttribute("protocol"))
+        port_id = hst.add_port(port.getAttribute("portid"),
+                               port.getAttribute("protocol"))
         if port.getElementsByTagName("service") == []:
             hst.add_service(port_id, 'Unknown')
         else:
-            parse_service(hst, port_id, port.getElementsByTagName("service")[0])
+            parse_service(hst, port_id,
+                          port.getElementsByTagName("service")[0])
         # Check for PC name if available:
         if port.getElementsByTagName("script") != []:
             parse_names(hst, port.getElementsByTagName("script")[0])
         # Check for and add vulnerabilities:
         if not port.getElementsByTagName("script") == []:
-            tables = port.getElementsByTagName("script")[0].getElementsByTagName("table")
+            tables = port.getElementsByTagName(
+                "script")[0].getElementsByTagName("table")
             if tables != []:
                 parse_vulns(hst, tables, port)
     global hosts
@@ -284,6 +296,7 @@ def parse_host(host):
 
 
 # Nmap File Handling:
+
 
 def nmap_output():
     hosts_title()
@@ -306,6 +319,7 @@ def nmap_handling():
 
 
 # Vulnerability File Handling:
+
 
 def vuln_handling():
     # Handles vulnerabilities.
@@ -335,6 +349,7 @@ def vuln_handling():
 
 # Users File Handling:
 
+
 def user_is_super(username):
     # Checks if a user is delmited as a superuser.
     if re.match(r"[(\[{*\'\"]+[A-Za-z0-9]*[)\]}*\'\"]+", username) != None:
@@ -359,7 +374,10 @@ def get_users():
         usernames.pop()
     for u in usernames:
         if user_is_super(u):
-            users.append(User(re.search(r'[(\[{*\'\"]+([A-Za-z0-9_-]*)[)\]}*\'\"]+', u).group(1), True))
+            users.append(
+                User(
+                    re.search(r'[(\[{*\'\"]+([A-Za-z0-9_-]*)[)\]}*\'\"]+',
+                              u).group(1), True))
         else:
             users.append(User(u, False))
     return
@@ -377,7 +395,11 @@ def users_output():
     # This handles the output of users ensuring that they appear in a 6 row grid.
     if len(users) % 6 == 0:
         for i in range(0, len(users), 6):
-            add_users(admin_handling(users[i]), admin_handling(users[i+1]), admin_handling(users[i+2]), admin_handling(users[i+3]), admin_handling(users[i+4]), admin_handling(users[i+5]))
+            add_users(admin_handling(users[i]), admin_handling(users[i + 1]),
+                      admin_handling(users[i + 2]),
+                      admin_handling(users[i + 3]),
+                      admin_handling(users[i + 4]),
+                      admin_handling(users[i + 5]))
     else:
         diff = len(users) % 6
         for i in range(0, len(users) + diff, 6):
@@ -388,10 +410,20 @@ def users_output():
                     if j > lim:
                         lastUsers.append(User('', False))
                     else:
-                        lastUsers.append(users[i+j])
-                add_users(admin_handling(lastUsers[0]), admin_handling(lastUsers[1]), admin_handling(lastUsers[2]), admin_handling(lastUsers[3]), admin_handling(lastUsers[4]), admin_handling(lastUsers[5]))
+                        lastUsers.append(users[i + j])
+                add_users(admin_handling(lastUsers[0]),
+                          admin_handling(lastUsers[1]),
+                          admin_handling(lastUsers[2]),
+                          admin_handling(lastUsers[3]),
+                          admin_handling(lastUsers[4]),
+                          admin_handling(lastUsers[5]))
             else:
-                add_users(admin_handling(users[i]), admin_handling(users[i + 1]), admin_handling(users[i + 2]), admin_handling(users[i + 3]), admin_handling(users[i + 4]), admin_handling(users[i + 5]))
+                add_users(admin_handling(users[i]),
+                          admin_handling(users[i + 1]),
+                          admin_handling(users[i + 2]),
+                          admin_handling(users[i + 3]),
+                          admin_handling(users[i + 4]),
+                          admin_handling(users[i + 5]))
     return
 
 
@@ -405,6 +437,7 @@ def user_handling():
 
 
 # File Handling:
+
 
 def create_file():
     file = open(latex_file, "w")
@@ -430,6 +463,7 @@ def read_file(file):
 
 # LaTeX Handling:
 
+
 def update_template():
     new_template = requests.get(TEMPLATE_URL).content
     open('template.tex', 'wb').write(new_template)
@@ -454,12 +488,14 @@ def start_hosts():
 
 
 def add_host(host):
-    append_file('\n\t' + r"\host{%s}{%s}{%s}{" % (host.hostname, host.ip, host.os))
+    append_file('\n\t' + r"\host{%s}{%s}{%s}{" %
+                (host.hostname, host.ip, host.os))
     if not host.ports_open():
         append_file('\n\t\t' + r"\portserv{None}{None}")
     else:
         for i in range(len(host.ports)):
-            append_file('\n\t\t' + r"\portserv{%s}{%s}" % (host.get_port_output(i), host.ports[i].get_service()))
+            append_file('\n\t\t' + r"\portserv{%s}{%s}" %
+                        (host.get_port_output(i), host.ports[i].get_service()))
     append_file("\n\t}")
     return
 
@@ -480,7 +516,8 @@ def start_users():
 
 
 def add_users(user1, user2, user3, user4, user5, user6):
-    append_file('\n\t' + r"\user{%s}{%s}{%s}{%s}{%s}{%s}" % (user1, user2, user3, user4, user5, user6))
+    append_file('\n\t' + r"\user{%s}{%s}{%s}{%s}{%s}{%s}" %
+                (user1, user2, user3, user4, user5, user6))
     return
 
 
@@ -500,12 +537,15 @@ def start_vulns():
 
 
 def add_vulns(host):
-    append_file('\n' + r"\systemvuln{%s}{%s}{%s}{" % (host.hostname, host.ip, host.vuln_status()))
+    append_file('\n' + r"\systemvuln{%s}{%s}{%s}{" %
+                (host.hostname, host.ip, host.vuln_status()))
     if not host.has_vulns():
         append_file('\n\t' + r"\vuln{None}{0.0}")
     else:
         for v in range(len(host.vulns)):
-            append_file('\n\t' + r"\vuln{%s: %s}{%s}" % (host.get_port_service(host.vulns[v].port), host.vulns[v].cve, host.vulns[v].cvss))
+            append_file('\n\t' + r"\vuln{%s: %s}{%s}" %
+                        (host.get_port_service(host.vulns[v].port),
+                         host.vulns[v].cve, host.vulns[v].cvss))
     append_file('\n}')
     return
 
@@ -516,6 +556,7 @@ def end_file():
 
 
 # Core Program Handling:
+
 
 def vulns_pres():
     for h in hosts:
@@ -544,12 +585,13 @@ def main():
 
 # Input Handling:
 
+
 def exist_verifier(file, name):
     if not exists(file):
-        update = input(
-            '\nThe ' + name + ' file at ' + eval(name + '_file') + ' cannot be found.'
-            + '\nDo you wish to download the latest version of the ' + name + ' file? [Y/n] '
-        )
+        update = input('\nThe ' + name + ' file at ' + eval(name + '_file') +
+                       ' cannot be found.' +
+                       '\nDo you wish to download the latest version of the ' +
+                       name + ' file? [Y/n] ')
         if update.lower() == 'y':
             eval('update_' + name + '()')
             return
@@ -558,29 +600,60 @@ def exist_verifier(file, name):
 
 
 # Initalise Parser:
-parser = argparse.ArgumentParser(
-        prog='Nmap2Tex',
-        description='''
+parser = argparse.ArgumentParser(prog='Nmap2Tex',
+                                 description='''
         Nmap2Tex allows you to automatically create a LaTeX document
          presenting all of the information from the provided Nmap scans.
         ''',
-        add_help=False
-        )
+                                 add_help=False)
 parser._positionals.title = 'Mandatory Arguments:'
 parser._optionals.title = 'Optional Arguments:'
 # Arguments:
 parser.add_argument("Nmap", help="Nmap XML file")
 parser.add_argument("Output", help="Output LaTeX file")
 parser.add_argument("-u", "--users", help="File containing a list of users")
-parser.add_argument("-us", "--user-seperator", help="Custom input for character that seperates users in the users file")
-parser.add_argument("-t", "--template", default="template.tex", help="LaTeX template file")
-parser.add_argument("-tu", "--template-update", action='store_true', help="Retrieve latest LaTeX template file - Will OVERWRITE template.tex")
-parser.add_argument("-s", "--services", default="services.json", help="JSON file containing human readable names for specific services")
-parser.add_argument("-su", "--services-update", action='store_true', help="Retrieve latest services file - Will OVERWRITE services.json")
-parser.add_argument("-v", "--vuln", help="External Nmap vulentability scan XML file")
-parser.add_argument("-vr", "--vuln-report", action='store_true', help="Create a vulnerability report even if no external vulnerability scan file has been provided")
-parser.add_argument("-h", "--help", action="help", default=argparse.SUPPRESS, help="Show this help message")
-parser.add_argument("--version", action='version', version='%(prog)s '+__version__, help="Show program's version number")
+parser.add_argument(
+    "-us",
+    "--user-seperator",
+    help="Custom input for character that seperates users in the users file")
+parser.add_argument("-t",
+                    "--template",
+                    default="template.tex",
+                    help="LaTeX template file")
+parser.add_argument(
+    "-tu",
+    "--template-update",
+    action='store_true',
+    help="Retrieve latest LaTeX template file - Will OVERWRITE template.tex")
+parser.add_argument(
+    "-s",
+    "--services",
+    default="services.json",
+    help="JSON file containing human readable names for specific services")
+parser.add_argument(
+    "-su",
+    "--services-update",
+    action='store_true',
+    help="Retrieve latest services file - Will OVERWRITE services.json")
+parser.add_argument("-v",
+                    "--vuln",
+                    help="External Nmap vulentability scan XML file")
+parser.add_argument(
+    "-vr",
+    "--vuln-report",
+    action='store_true',
+    help=
+    "Create a vulnerability report even if no external vulnerability scan file has been provided"
+)
+parser.add_argument("-h",
+                    "--help",
+                    action="help",
+                    default=argparse.SUPPRESS,
+                    help="Show this help message")
+parser.add_argument("--version",
+                    action='version',
+                    version='%(prog)s ' + __version__,
+                    help="Show program's version number")
 # Argument Parsing:
 args = parser.parse_args()
 nmap_file = args.Nmap
@@ -599,6 +672,5 @@ if args.template_update:
     update_template()
 exist_verifier(template_file, 'template')
 exist_verifier(services_file, 'services')
-
 
 main()

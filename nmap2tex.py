@@ -180,8 +180,10 @@ def parse_services():
 
 
 def update_services():
+    print('Updating services...')
     new_services = requests.get(SERVICES_URL).content
     open('services.json', 'wb').write(new_services)
+    print('Updated services!')
     return
 
 
@@ -465,8 +467,10 @@ def read_file(file):
 
 
 def update_template():
+    print('Updating template...')
     new_template = requests.get(TEMPLATE_URL).content
     open('template.tex', 'wb').write(new_template)
+    print('Updated template!')
     return
 
 

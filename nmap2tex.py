@@ -156,6 +156,42 @@ class Vuln:
         self.cve = cve
         self.cvss = cvss
         self.port = port
+        self.description = ''
+        self.vector = ''
+        self.exploit = ''
+        self.patch = ''
+        self.cwe_id = ''
+        self.cwe_name = ''
+        self.cpes = []
+        return
+
+    def add_nvd(self, desc, vector, exploit, patch, cwe_id):
+        self.description = desc
+        self.vector = vector
+        self.exploit = exploit
+        self.patch = patch
+        self.cwe_id = cwe_id
+        return
+
+    def add_cpe(self, cpe):
+        self.cpes.append(cpe)
+        return
+
+
+class CPE:
+    # CPE Object for when use with extended vulnerability report.
+    def __init__(self, cpe):
+        self.cpe = cpe
+        self.start_ver = None
+        self.end_ver = None
+        return
+
+    def add_start_ver(self, start_ver):
+        self.start_ver = start_ver
+        return
+
+    def add_end_ver(self, end_ver):
+        self.end_ver = end_ver
         return
 
 

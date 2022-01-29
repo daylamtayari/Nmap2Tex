@@ -259,8 +259,8 @@ def parse_vulns(host, tables, port):
                 cvss = e.firstChild.data
             elif e.getAttribute("key") == "id":
                 cveid = e.firstChild.data
-            if cve:
-                host.add_vuln(cveid, cvss, port.getAttribute("portid"))
+        if cve:
+            host.add_vuln(cveid, cvss, port.getAttribute("portid"))
     return
 
 

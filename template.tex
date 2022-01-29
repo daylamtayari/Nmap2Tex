@@ -10,7 +10,7 @@
 % Custom command to create fully lower case compatible with other commands.
 % Here it is used to ensure that the general host vulnerability classification also colours the header of the host's vulnerability table.
 \ExplSyntaxOn
-\cs_new_eq:NN \LowerCase \text_lowercase:n 
+\cs_new_eq:NN \LowerCase \text_lowercase:n
 \ExplSyntaxOff
 
 \setlength{\parindent}{0em}
@@ -21,7 +21,7 @@
 \definecolor{Low}{RGB}{255,255,103}
 \definecolor{Medium}{RGB}{255,192,0}
 \definecolor{High}{RGB}{255,102,0}
-\definecolor{Critcal}{RGB}{254,0,0}
+\definecolor{Critical}{RGB}{254,0,0}
 
 \renewcommand{\title}[1]{
     % Creates the left-aligned title at the top of the page.
@@ -99,15 +99,15 @@
         \hline
         \textbf{#1 - #2} & \cellcolor{\LowerCase{#3}}\textbf{#3} \\
         \hline
-        \textbf{Vulnerabilities:} & \textbf{CVSS Rating:} \\                                                                              
-        \endfirsthead                                                                                                                
-        \hline                                                                                                                       
-        \textbf{#1 - #2} & \cellcolor{\LowerCase{#3}}\textbf{#3} \\                                                                                            
-        \hline                                                                                                                       
-        \textbf{Vulnerabilities:} & \textbf{CVSS Rating:} \\                                                                              
-        \endhead                                                                                                                     
-        \endfoot                                                                                                                     
-        \endlastfoot  
+        \textbf{Vulnerabilities:} & \textbf{CVSS Rating:} \\
+        \endfirsthead
+        \hline
+        \textbf{#1 - #2} & \cellcolor{\LowerCase{#3}}\textbf{#3} \\
+        \hline
+        \textbf{Vulnerabilities:} & \textbf{CVSS Rating:} \\
+        \endhead
+        \endfoot
+        \endlastfoot
         #4
         \hline
     \end{longtable}
@@ -116,7 +116,7 @@
 \newcommand{\evalVuln}[1]{%
     % Evaluates a CVE's rating to determine whether its corresponding colour.
     % Colours are based on the CVSS v3.0 standard.
-    \xintifboolexpr{#1=0.0}
+    \xintifboolexpr{#1==0.0}
         {None}%
         {\xintifboolexpr{#1>0.0 && #1<4.0}
             {Low}%
@@ -130,7 +130,7 @@
 \newcommand{\vuln}[2]{
     % Individual vulnerability.
     \hline
-    \rowcolor{\evalVuln{#2}} 
+    \rowcolor{\evalVuln{#2}}
     #1 & \evalVuln{#2} - #2 \\
 }
 
